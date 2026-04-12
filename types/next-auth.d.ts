@@ -12,6 +12,7 @@ declare module 'next-auth' {
       lastName: string;
       role: UserRole;
       department: string;
+      hospital: string | null;
     };
   }
 
@@ -23,6 +24,7 @@ declare module 'next-auth' {
     lastName: string;
     role: UserRole;
     department: string;
+    hospital: string | null;
   }
 }
 
@@ -33,5 +35,6 @@ declare module 'next-auth/jwt' {
     firstName: string;
     lastName: string;
     department: string;
+    hospital: string | null;
   }
 }

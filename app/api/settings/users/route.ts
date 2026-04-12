@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const filter: Record<string, unknown> = {};
     if (role) filter.role = role;
 
-    const data = await User.find(filter).sort({ createdAt: -1 }).limit(limit).lean();
+    const data = await User.find(filter).populate('hospital', 'name').sort({ createdAt: -1 }).limit(limit).lean();
     return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Users GET error:', error);

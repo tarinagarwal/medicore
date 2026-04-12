@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -64,6 +65,8 @@ interface RelatedInvoice {
 }
 
 export default function PatientProfilePage() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
   const params = useParams();
   const router = useRouter();
   const [data, setData] = useState<{
@@ -130,12 +133,16 @@ export default function PatientProfilePage() {
           </div>
         </div>
         <div className={s.profileActions}>
-          <Button variant="secondary" onClick={() => setEditOpen(true)}>
-            <Edit size={14} /> Edit
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            <Trash2 size={14} /> Discharge
-          </Button>
+          {isAdmin && (
+            <>
+              <Button variant="secondary" onClick={() => setEditOpen(true)}>
+                <Edit size={14} /> Edit
+              </Button>
+              <Button variant="danger" onClick={handleDelete}>
+                <Trash2 size={14} /> Discharge
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

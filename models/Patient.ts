@@ -37,6 +37,7 @@ const PatientSchema = new Schema<PatientDocument>(
       enum: ['active', 'discharged', 'deceased'],
       default: 'active',
     },
+    hospital: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }

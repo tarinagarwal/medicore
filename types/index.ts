@@ -20,9 +20,44 @@ export interface IUser {
   password: string;
   role: UserRole;
   department: string;
+  hospital: Types.ObjectId | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// ──────────────────────────────────────────
+// Hospital
+// ──────────────────────────────────────────
+export interface IHospital {
+  _id: Types.ObjectId;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ──────────────────────────────────────────
+// Intake / Triage (Reception Phase)
+// ──────────────────────────────────────────
+export interface IIntakeVitals {
+  weight: string;
+  bloodPressure: string;
+}
+
+export interface IIntakeQuestion {
+  question: string;
+  answer: string;
+}
+
+export interface IIntake {
+  vitals: IIntakeVitals;
+  questions: IIntakeQuestion[];
+  takenBy: Types.ObjectId;
+  takenAt: Date;
 }
 
 // ──────────────────────────────────────────
@@ -63,6 +98,7 @@ export interface IPatient {
   emergencyContact: IEmergencyContact;
   category: PatientCategory;
   status: PatientStatus;
+  hospital: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
   createdBy: Types.ObjectId;
@@ -90,6 +126,8 @@ export interface IAppointment {
   reason: string;
   status: AppointmentStatus;
   notes: string;
+  hospital: Types.ObjectId | null;
+  intake: IIntake | null;
   createdAt: Date;
   updatedAt: Date;
   createdBy: Types.ObjectId;

@@ -53,12 +53,16 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/patients — create new patient
+// POST /api/patients — create new patient (admin only)
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const session = await getSession();
     if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({ success: false, message: 'Only administrators can create patients' }, { status: 403 });
+    }
 
     const body = await request.json();
 

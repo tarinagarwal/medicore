@@ -5,6 +5,8 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import styles from '@/styles/ui.module.css';
 
+interface IntakeQuestion { question: string; answer: string; }
+
 interface AppointmentFormData {
   patient: string;
   doctor: string;
@@ -14,11 +16,22 @@ interface AppointmentFormData {
   reason: string;
   status: string;
   notes: string;
+  intake: {
+    vitals: { weight: string; bloodPressure: string };
+    questions: IntakeQuestion[];
+  };
 }
+
+const defaultQuestions: IntakeQuestion[] = [
+  { question: 'Do you have any allergies?', answer: '' },
+  { question: 'Are you currently on any medication?', answer: '' },
+  { question: 'Have you had any recent surgeries?', answer: '' },
+];
 
 const emptyForm: AppointmentFormData = {
   patient: '', doctor: '', department: '', dateTime: '',
   duration: 30, reason: '', status: 'scheduled', notes: '',
+  intake: { vitals: { weight: '', bloodPressure: '' }, questions: [...defaultQuestions] },
 };
 
 const departments = [
@@ -77,9 +90,10 @@ export default function AppointmentFormModal({ open, onClose, onSaved, editData 
         reason: editData.reason,
         status: editData.status,
         notes: editData.notes,
+        intake: editData.intake || emptyForm.intake,
       });
     } else {
-      setForm(emptyForm);
+      setForm({ ...emptyForm, intake: { vitals: { weight: '', bloodPressure: '' }, questions: [...defaultQuestions] } });
     }
     setError('');
   }, [editData, open]);
@@ -187,6 +201,37 @@ export default function AppointmentFormModal({ open, onClose, onSaved, editData 
             </select>
           </div>
         )}
+
+        {/* ── Intake / Triage (Reception Phase) ── */}
+        <div style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '1px', margin: '16px 0 8px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+          Initial Consultation — Vitals
+        </div>
+        <div className={styles.formRow}>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Weight (kg)</label>
+            <input className={styles.formInput} value={form.intake.vitals.weight} onChange={(e) => setForm(prev => ({ ...prev, intake: { ...prev.intake, vitals: { ...prev.intake.vitals, weight: e.target.value } } }))} placeholder="e.g., 70" />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Blood Pressure</label>
+            <input className={styles.formInput} value={form.intake.vitals.bloodPressure} onChange={(e) => setForm(prev => ({ ...prev, intake: { ...prev.intake, vitals: { ...prev.intake.vitals, bloodPressure: e.target.value } } }))} placeholder="e.g., 120/80" />
+          </div>
+        </div>
+
+        <div style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '1px', margin: '12px 0 8px' }}>
+          Screening Questions
+        </div>
+        {form.intake.questions.map((q, i) => (
+          <div key={i} className={styles.formGroup}>
+            <label className={styles.formLabel}>{q.question}</label>
+            <input className={styles.formInput} value={q.answer} onChange={(e) => {
+              setForm(prev => {
+                const questions = [...prev.intake.questions];
+                questions[i] = { ...questions[i], answer: e.target.value };
+                return { ...prev, intake: { ...prev.intake, questions } };
+              });
+            }} placeholder="Answer..." />
+          </div>
+        ))}
 
         <div className={styles.formGroup}>
           <label className={styles.formLabel}>Notes</label>

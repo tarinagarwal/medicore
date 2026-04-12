@@ -17,6 +17,19 @@ const AppointmentSchema = new Schema<AppointmentDocument>(
       default: 'scheduled',
     },
     notes: { type: String, default: '' },
+    hospital: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },
+    intake: {
+      vitals: {
+        weight: { type: String, default: '' },
+        bloodPressure: { type: String, default: '' },
+      },
+      questions: [{
+        question: { type: String, default: '' },
+        answer: { type: String, default: '' },
+      }],
+      takenBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+      takenAt: { type: Date, default: null },
+    },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }

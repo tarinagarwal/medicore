@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
@@ -37,6 +38,8 @@ const avatarColors = [
 ];
 
 export default function PatientsPage() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
   const router = useRouter();
   const [patients, setPatients] = useState<PatientRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,9 +137,11 @@ export default function PatientsPage() {
           <h1>Patients</h1>
           <p>{total} patient{total !== 1 ? 's' : ''} registered</p>
         </div>
-        <Button onClick={() => { setEditPatient(null); setModalOpen(true); }}>
-          <Plus size={16} /> New Patient
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => { setEditPatient(null); setModalOpen(true); }}>
+            <Plus size={16} /> New Patient
+          </Button>
+        )}
       </div>
 
       <div className={s.controls}>

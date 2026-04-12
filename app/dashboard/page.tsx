@@ -196,6 +196,51 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* ── Doctor: Incoming Patients with Intake Data ── */}
+      {session?.user?.role === 'doctor' && (data?.waitingRoom || []).some((apt: Record<string, unknown>) => apt.intake) && (
+        <Card style={{ marginBottom: '20px' }}>
+          <CardHeader title="Incoming Patients — Intake Data from Reception" right={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--green)' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', animation: 'pulse 1.5s infinite', display: 'inline-block' }} />
+              Live
+            </div>
+          } />
+          {(data?.waitingRoom || []).filter((apt: Record<string, unknown>) => {
+            const intake = apt.intake as { vitals?: { weight?: string; bloodPressure?: string } } | null;
+            return intake?.vitals?.weight || intake?.vitals?.bloodPressure;
+          }).map((apt: Record<string, unknown>) => {
+            const p = apt.patient as { firstName: string; lastName: string } | null;
+            const intake = apt.intake as { vitals: { weight: string; bloodPressure: string }; questions?: { question: string; answer: string }[] };
+            return (
+              <div key={apt._id as string} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500, fontSize: '13px' }}>{p ? `${p.firstName} ${p.lastName}` : 'Unknown'}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--muted)' }}>{apt.department as string} — {apt.reason as string || 'No reason'}</div>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  {intake.vitals.weight && (
+                    <div style={{ background: 'var(--bg3)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: '12px' }}>
+                      <span style={{ color: 'var(--muted)' }}>Weight: </span><strong>{intake.vitals.weight} kg</strong>
+                    </div>
+                  )}
+                  {intake.vitals.bloodPressure && (
+                    <div style={{ background: 'var(--bg3)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: '12px' }}>
+                      <span style={{ color: 'var(--muted)' }}>BP: </span><strong>{intake.vitals.bloodPressure}</strong>
+                    </div>
+                  )}
+                </div>
+                {intake.questions && intake.questions.filter(q => q.answer).length > 0 && (
+                  <div style={{ fontSize: '11px', color: 'var(--accent)', cursor: 'pointer' }} title={intake.questions.filter(q => q.answer).map(q => `${q.question}: ${q.answer}`).join('\n')}>
+                    {intake.questions.filter(q => q.answer).length} answer{intake.questions.filter(q => q.answer).length > 1 ? 's' : ''}
+                  </div>
+                )}
+                <StatusBadge status={apt.status as string} />
+              </div>
+            );
+          })}
+        </Card>
+      )}
+
       {/* ── Row 1: Waiting Room + Alerts ── */}
       <div className={styles.grid3}>
         <Card>

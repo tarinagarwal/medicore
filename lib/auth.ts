@@ -41,6 +41,7 @@ export const authOptions: AuthOptions = {
           lastName: user.lastName,
           role: user.role,
           department: user.department,
+          hospital: user.hospital?.toString() || null,
         };
       },
     }),
@@ -57,6 +58,7 @@ export const authOptions: AuthOptions = {
         token.firstName = user.firstName;
         token.lastName = user.lastName;
         token.department = user.department;
+        token.hospital = (user as unknown as Record<string, unknown>).hospital as string | null;
       }
       return token;
     },
@@ -67,6 +69,7 @@ export const authOptions: AuthOptions = {
         session.user.firstName = token.firstName;
         session.user.lastName = token.lastName;
         session.user.department = token.department;
+        session.user.hospital = token.hospital;
       }
       return session;
     },

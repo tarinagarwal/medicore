@@ -2,8 +2,14 @@ import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 import type { UserRole } from '@/types';
 
+// Tightened role access:
+// - Receptionist: only dashboard + appointments (booking + intake). NO patients/records/lab etc.
+// - Doctor: dashboard, patients (read-only at API), appointments, records, lab, imaging
+// - Admin: everything
 const roleAccess: Record<string, UserRole[]> = {
   '/settings': ['admin'],
+  '/patients': ['admin', 'doctor'],
+  '/records': ['admin', 'doctor'],
   '/lab': ['admin', 'doctor', 'lab-tech'],
   '/imaging': ['admin', 'doctor'],
   '/pharmacy': ['admin', 'pharmacist'],
@@ -11,14 +17,24 @@ const roleAccess: Record<string, UserRole[]> = {
   '/reports': ['admin', 'billing', 'doctor'],
 };
 
+const receptionistAllowed = ['/dashboard', '/appointments'];
+
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const pathname = req.nextUrl.pathname;
-
     const basePath = '/' + pathname.split('/')[1];
-    const allowedRoles = roleAccess[basePath];
 
+    // Receptionist: only allowed specific routes
+    if (token?.role === 'receptionist') {
+      if (!receptionistAllowed.includes(basePath)) {
+        return NextResponse.redirect(new URL('/dashboard', req.url));
+      }
+      return NextResponse.next();
+    }
+
+    // Role-based access for other roles
+    const allowedRoles = roleAccess[basePath];
     if (allowedRoles && token?.role) {
       if (!allowedRoles.includes(token.role as UserRole)) {
         return NextResponse.redirect(new URL('/dashboard', req.url));

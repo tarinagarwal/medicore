@@ -51,6 +51,11 @@ export async function PUT(
     const session = await getSession();
     if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
+    // Only admin can edit patients. Doctors have read-only access.
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({ success: false, message: 'Only administrators can edit patient data' }, { status: 403 });
+    }
+
     const { id } = await params;
     const body = await request.json();
 
@@ -64,7 +69,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/patients/[id] — soft delete (set status to discharged)
+// DELETE /api/patients/[id] — soft delete (set status to discharged), admin only
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -73,6 +78,10 @@ export async function DELETE(
     await dbConnect();
     const session = await getSession();
     if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({ success: false, message: 'Only administrators can discharge patients' }, { status: 403 });
+    }
 
     const { id } = await params;
     const patient = await Patient.findByIdAndUpdate(id, { status: 'discharged' }, { new: true }).lean();

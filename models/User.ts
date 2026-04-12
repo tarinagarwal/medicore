@@ -15,6 +15,7 @@ const UserSchema = new Schema<UserDocument>(
       required: true,
     },
     department: { type: String, default: '' },
+    hospital: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },
     isActive: { type: Boolean, default: true },
   },
   {
