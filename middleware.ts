@@ -5,7 +5,7 @@ import type { UserRole } from '@/types';
 // Page-level role restrictions (UI routes only, not API)
 const pageRoleAccess: Record<string, UserRole[]> = {
   '/settings': ['admin'],
-  '/patients': ['admin', 'doctor'],
+  '/patients': ['admin', 'doctor', 'receptionist'],
   '/records': ['admin', 'doctor'],
   '/lab': ['admin', 'doctor', 'lab-tech'],
   '/imaging': ['admin', 'doctor'],
@@ -15,7 +15,7 @@ const pageRoleAccess: Record<string, UserRole[]> = {
 };
 
 // Pages receptionist can access
-const receptionistPages = ['/dashboard', '/appointments', '/billing'];
+const receptionistPages = ['/dashboard', '/appointments', '/billing', '/patients'];
 
 export default withAuth(
   function middleware(req) {

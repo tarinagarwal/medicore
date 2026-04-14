@@ -39,7 +39,8 @@ const avatarColors = [
 
 export default function PatientsPage() {
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === 'admin';
+  const role = session?.user?.role;
+  const canCreatePatients = role === 'admin' || role === 'receptionist';
   const router = useRouter();
   const [patients, setPatients] = useState<PatientRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,7 +138,7 @@ export default function PatientsPage() {
           <h1>Patients</h1>
           <p>{total} patient{total !== 1 ? 's' : ''} registered</p>
         </div>
-        {isAdmin && (
+        {canCreatePatients && (
           <Button onClick={() => { setEditPatient(null); setModalOpen(true); }}>
             <Plus size={16} /> New Patient
           </Button>

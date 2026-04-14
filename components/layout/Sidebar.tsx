@@ -35,7 +35,7 @@ function buildNavSections(counts: { patients: number; appointmentsToday: number;
       label: 'Main',
       items: [
         { label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={16} /> },
-        { label: 'Patients', href: '/patients', icon: <Users size={16} />, badge: counts.patients > 0 ? String(counts.patients) : undefined, roles: ['admin', 'doctor'] },
+        { label: 'Patients', href: '/patients', icon: <Users size={16} />, badge: counts.patients > 0 ? String(counts.patients) : undefined, roles: ['admin', 'doctor', 'receptionist'] },
         { label: 'Appointments', href: '/appointments', icon: <CalendarDays size={16} />, badge: counts.appointmentsToday > 0 ? String(counts.appointmentsToday) : undefined, badgeColor: 'amber' },
         { label: 'DME / DSE', href: '/records', icon: <FileText size={16} />, roles: ['admin', 'doctor'] },
       ],
