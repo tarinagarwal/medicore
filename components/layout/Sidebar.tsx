@@ -51,7 +51,7 @@ function buildNavSections(counts: { patients: number; appointmentsToday: number;
     {
       label: 'Management',
       items: [
-        { label: 'Billing & Cash', href: '/billing', icon: <DollarSign size={16} />, roles: ['admin', 'billing'] },
+        { label: 'Billing & Cash', href: '/billing', icon: <DollarSign size={16} />, roles: ['admin', 'billing', 'receptionist'] },
         { label: 'Reporting & Stats', href: '/reports', icon: <Activity size={16} />, roles: ['admin', 'billing', 'doctor'] },
         { label: 'Settings', href: '/settings', icon: <Settings size={16} />, roles: ['admin'] },
       ],

@@ -2,39 +2,46 @@ import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 import type { UserRole } from '@/types';
 
-// Tightened role access:
-// - Receptionist: only dashboard + appointments (booking + intake). NO patients/records/lab etc.
-// - Doctor: dashboard, patients (read-only at API), appointments, records, lab, imaging
-// - Admin: everything
-const roleAccess: Record<string, UserRole[]> = {
+// Page-level role restrictions (UI routes only, not API)
+const pageRoleAccess: Record<string, UserRole[]> = {
   '/settings': ['admin'],
   '/patients': ['admin', 'doctor'],
   '/records': ['admin', 'doctor'],
   '/lab': ['admin', 'doctor', 'lab-tech'],
   '/imaging': ['admin', 'doctor'],
   '/pharmacy': ['admin', 'pharmacist'],
-  '/billing': ['admin', 'billing'],
+  '/billing': ['admin', 'billing', 'receptionist'],
   '/reports': ['admin', 'billing', 'doctor'],
 };
 
-const receptionistAllowed = ['/dashboard', '/appointments'];
+// Pages receptionist can access
+const receptionistPages = ['/dashboard', '/appointments', '/billing'];
 
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const pathname = req.nextUrl.pathname;
+    const isApi = pathname.startsWith('/api/');
+
+    // API routes: let them through — each API route handles its own auth/role checks
+    // This prevents HTML redirects breaking JSON responses
+    if (isApi) {
+      return NextResponse.next();
+    }
+
+    // Page routes: role-based access
     const basePath = '/' + pathname.split('/')[1];
 
-    // Receptionist: only allowed specific routes
+    // Receptionist: restricted page access
     if (token?.role === 'receptionist') {
-      if (!receptionistAllowed.includes(basePath)) {
+      if (!receptionistPages.includes(basePath)) {
         return NextResponse.redirect(new URL('/dashboard', req.url));
       }
       return NextResponse.next();
     }
 
-    // Role-based access for other roles
-    const allowedRoles = roleAccess[basePath];
+    // Other roles: check page access
+    const allowedRoles = pageRoleAccess[basePath];
     if (allowedRoles && token?.role) {
       if (!allowedRoles.includes(token.role as UserRole)) {
         return NextResponse.redirect(new URL('/dashboard', req.url));

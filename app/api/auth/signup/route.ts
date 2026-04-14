@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       lastName,
       email: email.toLowerCase(),
       password: hashedPassword,
-      role: 'doctor', // Default role for self-signup
+      role: 'receptionist', // Self-signup gets receptionist role. Doctors are created by admin only.
       department: '',
       isActive: true,
     });

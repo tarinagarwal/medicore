@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
     const patient = await Patient.create({
       ...body,
       patientId,
+      hospital: body.hospital || session.user.hospital || null,
       createdBy: session.user.id,
     });
 
