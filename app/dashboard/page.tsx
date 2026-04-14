@@ -18,6 +18,9 @@ import { Card, CardHeader } from '@/components/ui/Card';
 import PatientRow from '@/components/ui/PatientRow';
 import AlertItem from '@/components/ui/AlertItem';
 import ModuleCard from '@/components/ui/ModuleCard';
+import ReceptionistDashboard from '@/components/dashboards/ReceptionistDashboard';
+import DoctorDashboard from '@/components/dashboards/DoctorDashboard';
+import AdminBanner from '@/components/dashboards/AdminBanner';
 import ActivityItem from '@/components/ui/ActivityItem';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Tabs from '@/components/ui/Tabs';
@@ -103,6 +106,17 @@ const categoryLabels: Record<string, string> = {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const role = session?.user?.role;
+  const userName = session?.user?.name || 'User';
+
+  if (role === 'receptionist') return <ReceptionistDashboard userName={userName} />;
+  if (role === 'doctor') return <DoctorDashboard userName={userName} />;
+
+  return <AdminDashboard userName={userName} />;
+}
+
+function AdminDashboard({ userName }: { userName: string }) {
+  const { data: session } = useSession();
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -150,6 +164,8 @@ export default function DashboardPage() {
 
   return (
     <div>
+      <AdminBanner userName={userName} />
+
       {/* ── Welcome Strip ── */}
       <div className={styles.welcome}>
         <h1 className={styles.welcomeTitle}>Good morning, {firstName}</h1>
@@ -195,59 +211,6 @@ export default function DashboardPage() {
           icon={<DollarSign size={18} />}
         />
       </div>
-
-      {/* ── Doctor: Incoming Patients with Intake Data ── */}
-      {session?.user?.role === 'doctor' && (
-        <Card style={{ marginBottom: '20px' }}>
-          <CardHeader title="Incoming Patients — Intake Data from Reception" right={
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--green)' }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', animation: 'pulse 1.5s infinite', display: 'inline-block' }} />
-              Live
-            </div>
-          } />
-          {(data?.waitingRoom || []).filter((apt: Record<string, unknown>) => {
-            const intake = apt.intake as { vitals?: { weight?: string; bloodPressure?: string } } | null;
-            return intake?.vitals?.weight || intake?.vitals?.bloodPressure;
-          }).map((apt: Record<string, unknown>) => {
-            const p = apt.patient as { firstName: string; lastName: string } | null;
-            const intake = apt.intake as { vitals: { weight: string; bloodPressure: string }; questions?: { question: string; answer: string }[] };
-            return (
-              <div key={apt._id as string} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500, fontSize: '13px' }}>{p ? `${p.firstName} ${p.lastName}` : 'Unknown'}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--muted)' }}>{apt.department as string} — {apt.reason as string || 'No reason'}</div>
-                </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  {intake.vitals.weight && (
-                    <div style={{ background: 'var(--bg3)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: '12px' }}>
-                      <span style={{ color: 'var(--muted)' }}>Weight: </span><strong>{intake.vitals.weight} kg</strong>
-                    </div>
-                  )}
-                  {intake.vitals.bloodPressure && (
-                    <div style={{ background: 'var(--bg3)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: '12px' }}>
-                      <span style={{ color: 'var(--muted)' }}>BP: </span><strong>{intake.vitals.bloodPressure}</strong>
-                    </div>
-                  )}
-                </div>
-                {intake.questions && intake.questions.filter(q => q.answer).length > 0 && (
-                  <div style={{ fontSize: '11px', color: 'var(--accent)', cursor: 'pointer' }} title={intake.questions.filter(q => q.answer).map(q => `${q.question}: ${q.answer}`).join('\n')}>
-                    {intake.questions.filter(q => q.answer).length} answer{intake.questions.filter(q => q.answer).length > 1 ? 's' : ''}
-                  </div>
-                )}
-                <StatusBadge status={apt.status as string} />
-              </div>
-            );
-          })}
-          {(data?.waitingRoom || []).filter((apt: Record<string, unknown>) => {
-            const intake = apt.intake as { vitals?: { weight?: string; bloodPressure?: string } } | null;
-            return intake?.vitals?.weight || intake?.vitals?.bloodPressure;
-          }).length === 0 && (
-            <div style={{ textAlign: 'center', padding: '24px', color: 'var(--muted)', fontSize: '13px' }}>
-              No incoming patients with intake data yet. Waiting for reception to complete initial consultations.
-            </div>
-          )}
-        </Card>
-      )}
 
       {/* ── Row 1: Waiting Room + Alerts ── */}
       <div className={styles.grid3}>

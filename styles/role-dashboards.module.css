@@ -1,0 +1,258 @@
+/* ── Role Banner ── */
+.roleBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.roleBannerReception {
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  color: var(--accent2);
+}
+
+.roleBannerDoctor {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  color: var(--purple);
+}
+
+.roleBannerAdmin {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--accent);
+}
+
+.roleIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roleLabel {
+  flex: 1;
+}
+
+.roleUser {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* ── Receptionist Dashboard ── */
+.quickActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.quickAction {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.quickAction:hover {
+  border-color: var(--border2);
+  transform: translateY(-1px);
+}
+
+.quickActionIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.quickActionTitle {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.quickActionDesc {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ── Queue ── */
+.queueGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.queueItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.queueItem:last-child {
+  border-bottom: none;
+}
+
+.queueNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.queueInfo {
+  flex: 1;
+}
+
+.queueName {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.queueMeta {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Doctor: Patient Cards ── */
+.incomingGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.incomingCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.incomingCard:hover {
+  border-color: var(--border2);
+  transform: translateY(-1px);
+}
+
+.incomingHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.incomingAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.incomingName {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.incomingDept {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.vitalsRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.vitalChip {
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 8px 14px;
+  flex: 1;
+  text-align: center;
+}
+
+.vitalChipLabel {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.vitalChipValue {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.questionsPreview {
+  font-size: 12px;
+  color: var(--muted);
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.questionItem {
+  padding: 4px 0;
+}
+
+.questionLabel {
+  color: var(--muted);
+}
+
+.questionAnswer {
+  color: var(--text);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* ── Doctor Schedule ── */
+.scheduleGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 1100px) {
+  .quickActions { grid-template-columns: 1fr; }
+  .queueGrid { grid-template-columns: 1fr; }
+  .incomingGrid { grid-template-columns: 1fr; }
+  .scheduleGrid { grid-template-columns: 1fr; }
+}
