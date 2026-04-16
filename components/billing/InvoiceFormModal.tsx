@@ -7,21 +7,27 @@ import styles from '@/styles/ui.module.css';
 
 interface LineItem { description: string; category: string; amount: number; }
 interface PatientOption { _id: string; firstName: string; lastName: string; patientId: string; }
+interface HospitalOption { _id: string; name: string; }
 
 interface Props { open: boolean; onClose: () => void; onSaved: () => void; }
 
 export default function InvoiceFormModal({ open, onClose, onSaved }: Props) {
   const [patient, setPatient] = useState('');
+  const [hospital, setHospital] = useState('');
   const [items, setItems] = useState<LineItem[]>([{ description: '', category: 'consultation', amount: 0 }]);
   const [notes, setNotes] = useState('');
   const [patients, setPatients] = useState<PatientOption[]>([]);
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!open) return;
     fetch('/api/patients?limit=200').then(r => r.json()).then(j => { if (j.success) setPatients(j.data); });
-    setPatient(''); setItems([{ description: '', category: 'consultation', amount: 0 }]); setNotes(''); setError('');
+    fetch('/api/settings/hospitals').then(r => r.json()).then(j => {
+      if (j.success) setHospitals(j.data.filter((h: HospitalOption & { isActive: boolean }) => h.isActive));
+    });
+    setPatient(''); setHospital(''); setItems([{ description: '', category: 'consultation', amount: 0 }]); setNotes(''); setError('');
   }, [open]);
 
   const addItem = () => setItems(prev => [...prev, { description: '', category: 'consultation', amount: 0 }]);
@@ -37,7 +43,7 @@ export default function InvoiceFormModal({ open, onClose, onSaved }: Props) {
     if (!patient || valid.length === 0) { setError('Patient and at least one line item required.'); return; }
     setSaving(true); setError('');
     try {
-      const res = await fetch('/api/billing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ patient, items: valid, notes }) });
+      const res = await fetch('/api/billing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ patient, items: valid, notes, hospital }) });
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
       onSaved(); onClose();
@@ -56,6 +62,14 @@ export default function InvoiceFormModal({ open, onClose, onSaved }: Props) {
           <select className={styles.formSelect} value={patient} onChange={(e) => setPatient(e.target.value)} required>
             <option value="">Select patient...</option>
             {patients.map(p => <option key={p._id} value={p._id}>{p.firstName} {p.lastName} ({p.patientId})</option>)}
+          </select>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Hospital</label>
+          <select className={styles.formSelect} value={hospital} onChange={(e) => setHospital(e.target.value)}>
+            <option value="">No hospital (centralized)</option>
+            {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
           </select>
         </div>
 

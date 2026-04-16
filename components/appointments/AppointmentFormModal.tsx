@@ -79,11 +79,18 @@ export default function AppointmentFormModal({ open, onClose, onSaved, editData 
       return;
     }
     setRegisteringPatient(true);
+    setError('');
     try {
       const res = await fetch('/api/patients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(quickPatient),
+        body: JSON.stringify({
+          ...quickPatient,
+          address: { street: '', city: '', region: '', postalCode: '' },
+          insuranceInfo: { provider: '', policyNumber: '' },
+          emergencyContact: { name: '', phone: '', relationship: '' },
+          category: 'outpatient',
+        }),
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.message);

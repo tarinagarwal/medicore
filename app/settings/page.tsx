@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { Plus, UserX, Building2, Trash2 } from 'lucide-react';
+import { Plus, UserX, Building2, Trash2, MessageSquare, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/Card';
 import DataTable from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -21,6 +21,21 @@ interface HospitalRow {
   _id: string; name: string; address: string; phone: string; email: string; isActive: boolean;
 }
 
+interface SupportRequest {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+  status: 'pending' | 'in-progress' | 'resolved' | 'closed';
+  adminNotes: string;
+  resolvedBy: { firstName: string; lastName: string } | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const roles = [
   { value: 'admin', label: 'Administrator' }, { value: 'doctor', label: 'Doctor' }, { value: 'nurse', label: 'Nurse' },
   { value: 'lab-tech', label: 'Lab Technician' }, { value: 'pharmacist', label: 'Pharmacist' },
@@ -34,11 +49,15 @@ export default function SettingsPage() {
   const [tab, setTab] = useState('users');
   const [users, setUsers] = useState<UserRow[]>([]);
   const [hospitals, setHospitals] = useState<HospitalRow[]>([]);
+  const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [hospitalModalOpen, setHospitalModalOpen] = useState(false);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', role: 'doctor', department: '', hospital: '' });
   const [hospitalForm, setHospitalForm] = useState({ name: '', address: '', phone: '', email: '' });
+  const [supportForm, setSupportForm] = useState({ status: '', adminNotes: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -52,7 +71,12 @@ export default function SettingsPage() {
     catch (err) { console.error(err); }
   };
 
-  useEffect(() => { fetchUsers(); fetchHospitals(); }, []);
+  const fetchSupportRequests = async () => {
+    try { const res = await fetch('/api/support'); const json = await res.json(); if (json.success) setSupportRequests(json.data); }
+    catch (err) { console.error(err); }
+  };
+
+  useEffect(() => { fetchUsers(); fetchHospitals(); fetchSupportRequests(); }, []);
 
   const isAdmin = session?.user?.role === 'admin';
 
@@ -96,6 +120,32 @@ export default function SettingsPage() {
     if (!confirm('Deactivate this hospital?')) return;
     await fetch(`/api/settings/hospitals/${id}`, { method: 'DELETE' });
     fetchHospitals();
+  };
+
+  // ── Support CRUD ──
+  const handleUpdateSupport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRequest) return;
+    setSaving(true); setError('');
+    try {
+      const res = await fetch(`/api/support/${selectedRequest._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(supportForm),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      setSupportModalOpen(false); fetchSupportRequests();
+      setSupportForm({ status: '', adminNotes: '' });
+      setSelectedRequest(null);
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); }
+    finally { setSaving(false); }
+  };
+
+  const deleteSupport = async (id: string) => {
+    if (!confirm('Delete this support request?')) return;
+    await fetch(`/api/support/${id}`, { method: 'DELETE' });
+    fetchSupportRequests();
   };
 
   // ── User columns ──
@@ -191,6 +241,76 @@ export default function SettingsPage() {
     },
   ];
 
+  // ── Support columns ──
+  const supportColumns = [
+    {
+      key: 'subject', label: 'Request',
+      render: (r: Record<string, unknown>) => {
+        const row = r as unknown as SupportRequest;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: 32, height: 32, borderRadius: '8px', background: 'rgba(245,158,11,0.12)', color: 'var(--amber)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <MessageSquare size={16} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 500 }}>{row.subject}</div>
+              <div style={{ fontSize: '11.5px', color: 'var(--muted)' }}>{row.name} • {row.email}</div>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'status', label: 'Status',
+      render: (r: Record<string, unknown>) => {
+        const row = r as unknown as SupportRequest;
+        const statusMap: Record<string, { label: string; status: string }> = {
+          pending: { label: 'Pending', status: 'pending' },
+          'in-progress': { label: 'In Progress', status: 'scheduled' },
+          resolved: { label: 'Resolved', status: 'completed' },
+          closed: { label: 'Closed', status: 'cancelled' },
+        };
+        const s = statusMap[row.status] || { label: row.status, status: 'pending' };
+        return <StatusBadge status={s.status} label={s.label} />;
+      },
+    },
+    {
+      key: 'createdAt', label: 'Submitted',
+      render: (r: Record<string, unknown>) => {
+        const row = r as unknown as SupportRequest;
+        return new Date(row.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      },
+    },
+    {
+      key: 'actions', label: '',
+      render: (r: Record<string, unknown>) => {
+        const row = r as unknown as SupportRequest;
+        if (!isAdmin) return null;
+        return (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedRequest(row);
+                setSupportForm({ status: row.status, adminNotes: row.adminNotes });
+                setSupportModalOpen(true);
+              }}
+              style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px' }}
+            >
+              Manage
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); deleteSupport(row._id); }}
+              style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -206,7 +326,7 @@ export default function SettingsPage() {
         )}
       </div>
 
-      <Tabs tabs={[{ label: 'Users', value: 'users' }, { label: 'Hospitals', value: 'hospitals' }]} active={tab} onChange={setTab} />
+      <Tabs tabs={[{ label: 'Users', value: 'users' }, { label: 'Hospitals', value: 'hospitals' }, { label: 'Support', value: 'support' }]} active={tab} onChange={setTab} />
 
       {tab === 'users' && (
         <Card style={{ marginTop: '16px' }}>
@@ -221,6 +341,17 @@ export default function SettingsPage() {
         <Card style={{ marginTop: '16px' }}>
           <CardHeader title="Hospitals" right={<span style={{ fontSize: '12px', color: 'var(--muted)' }}>{hospitals.length} hospital{hospitals.length !== 1 ? 's' : ''}</span>} />
           <DataTable columns={hospitalColumns} data={hospitals as unknown as Record<string, unknown>[]} />
+        </Card>
+      )}
+
+      {tab === 'support' && (
+        <Card style={{ marginTop: '16px' }}>
+          <CardHeader title="Support Requests" right={<span style={{ fontSize: '12px', color: 'var(--muted)' }}>{supportRequests.length} request{supportRequests.length !== 1 ? 's' : ''}</span>} />
+          {supportRequests.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--muted)', fontSize: '13px' }}>No support requests yet</div>
+          ) : (
+            <DataTable columns={supportColumns} data={supportRequests as unknown as Record<string, unknown>[]} />
+          )}
         </Card>
       )}
 
@@ -275,6 +406,54 @@ export default function SettingsPage() {
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
               <Button variant="secondary" type="button" onClick={() => setHospitalModalOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={saving}>{saving ? 'Creating...' : 'Create Hospital'}</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* ── Manage Support Request Modal ── */}
+      {supportModalOpen && selectedRequest && (
+        <Modal title="Manage Support Request" onClose={() => { setSupportModalOpen(false); setSelectedRequest(null); }}>
+          <div style={{ marginBottom: '20px', padding: '16px', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '8px' }}>{selectedRequest.subject}</div>
+            <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '12px' }}>
+              From: {selectedRequest.name} ({selectedRequest.email})
+              {selectedRequest.phone && ` • ${selectedRequest.phone}`}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '8px' }}>
+              Submitted: {new Date(selectedRequest.createdAt).toLocaleString()}
+            </div>
+            <div style={{ fontSize: '13px', lineHeight: '1.6', marginTop: '12px', padding: '12px', background: 'var(--card)', borderRadius: 'var(--radius-sm)' }}>
+              {selectedRequest.message}
+            </div>
+          </div>
+
+          {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: 'var(--red)', padding: '10px 14px', borderRadius: 'var(--radius-sm)', fontSize: '12.5px', marginBottom: '16px' }}>{error}</div>}
+
+          <form onSubmit={handleUpdateSupport}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Status</label>
+              <select className={styles.formSelect} value={supportForm.status} onChange={(e) => setSupportForm(p => ({ ...p, status: e.target.value }))}>
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Admin Notes</label>
+              <textarea
+                className={styles.formInput}
+                value={supportForm.adminNotes}
+                onChange={(e) => setSupportForm(p => ({ ...p, adminNotes: e.target.value }))}
+                placeholder="Add internal notes about this request..."
+                rows={4}
+                style={{ resize: 'vertical', fontFamily: 'var(--font)' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <Button variant="secondary" type="button" onClick={() => { setSupportModalOpen(false); setSelectedRequest(null); }}>Cancel</Button>
+              <Button type="submit" disabled={saving}>{saving ? 'Updating...' : 'Update Request'}</Button>
             </div>
           </form>
         </Modal>

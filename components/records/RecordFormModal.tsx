@@ -8,6 +8,7 @@ import styles from '@/styles/ui.module.css';
 interface RecordFormData {
   patient: string;
   type: string;
+  hospital: string;
   content: {
     chiefComplaint: string;
     examination: string;
@@ -22,6 +23,7 @@ interface RecordFormData {
 const emptyForm: RecordFormData = {
   patient: '',
   type: 'consultation',
+  hospital: '',
   content: {
     chiefComplaint: '', examination: '', diagnosis: '', treatmentPlan: '',
     vitals: { bloodPressure: '', heartRate: '', temperature: '', weight: '', height: '' },
@@ -31,6 +33,7 @@ const emptyForm: RecordFormData = {
 };
 
 interface PatientOption { _id: string; firstName: string; lastName: string; patientId: string; }
+interface HospitalOption { _id: string; name: string; }
 
 interface Props {
   open: boolean;
@@ -42,6 +45,7 @@ interface Props {
 export default function RecordFormModal({ open, onClose, onSaved, editData }: Props) {
   const [form, setForm] = useState<RecordFormData>(emptyForm);
   const [patients, setPatients] = useState<PatientOption[]>([]);
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -49,6 +53,9 @@ export default function RecordFormModal({ open, onClose, onSaved, editData }: Pr
     if (!open) return;
     fetch('/api/patients?limit=200').then(r => r.json()).then(j => {
       if (j.success) setPatients(j.data);
+    });
+    fetch('/api/settings/hospitals').then(r => r.json()).then(j => {
+      if (j.success) setHospitals(j.data.filter((h: HospitalOption & { isActive: boolean }) => h.isActive));
     });
   }, [open]);
 
@@ -58,9 +65,11 @@ export default function RecordFormModal({ open, onClose, onSaved, editData }: Pr
       const v = (c.vitals || {}) as Record<string, string>;
       const presc = (c.prescriptions || []) as { medication: string; dosage: string; frequency: string; duration: string }[];
       const pat = editData.patient;
+      const hosp = editData.hospital;
       setForm({
         patient: typeof pat === 'object' && pat !== null ? (pat as PatientOption)._id : String(pat || ''),
         type: String(editData.type || 'consultation'),
+        hospital: typeof hosp === 'object' && hosp !== null ? (hosp as HospitalOption)._id : String(hosp || ''),
         content: {
           chiefComplaint: String(c.chiefComplaint || ''),
           examination: String(c.examination || ''),
@@ -163,6 +172,14 @@ export default function RecordFormModal({ open, onClose, onSaved, editData }: Pr
               <option value="prescription">Prescription</option>
             </select>
           </div>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Hospital</label>
+          <select className={styles.formSelect} value={form.hospital} onChange={(e) => setForm(p => ({ ...p, hospital: e.target.value }))}>
+            <option value="">No hospital (centralized)</option>
+            {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
+          </select>
         </div>
 
         <div className={styles.formGroup}>

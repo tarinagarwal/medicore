@@ -142,11 +142,6 @@ function LoginForm() {
                 </div>
               ))}
             </div>
-
-            <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--muted)', marginTop: '16px' }}>
-              Don&apos;t have an account?{' '}
-              <Link href="/signup" style={{ color: 'var(--accent)', fontWeight: 500 }}>Sign up</Link>
-            </div>
           </>
         )}
 
@@ -217,7 +212,9 @@ function LoginForm() {
               >
                 ← Choose different role
               </button>
-              <Link href="/signup" style={{ color: 'var(--accent)', fontWeight: 500 }}>Sign up</Link>
+              <Link href="/contact" style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: '13px' }}>
+                Need Help?
+              </Link>
             </div>
           </div>
         )}

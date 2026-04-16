@@ -176,6 +176,7 @@ export interface IMedicalRecord {
   type: RecordType;
   content: IRecordContent;
   attachments: IRecordAttachment[];
+  hospital: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -210,6 +211,7 @@ export interface ILabRequest {
   validatedBy: Types.ObjectId | null;
   validatedAt: Date | null;
   notes: string;
+  hospital: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -236,6 +238,7 @@ export interface IImagingStudy {
   report: string;
   attachments: IImagingAttachment[];
   notes: string;
+  hospital: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -256,6 +259,7 @@ export interface IPharmacyItem {
   expiryDate: Date;
   unitPrice: number;
   status: StockStatus;
+  hospital: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -305,6 +309,7 @@ export interface IInvoice {
   status: InvoiceStatus;
   payments: IPayment[];
   notes: string;
+  hospital: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
   createdBy: Types.ObjectId;

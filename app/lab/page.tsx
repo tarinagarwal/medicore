@@ -16,6 +16,7 @@ interface LabRow {
   requestId: string;
   patient: { firstName: string; lastName: string; patientId: string } | null;
   doctor: { firstName: string; lastName: string } | null;
+  hospital: { _id: string; name: string } | null;
   tests: { name: string; category: string }[];
   status: string;
   createdAt: string;
@@ -29,6 +30,8 @@ export default function LabPage() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [hospitalFilter, setHospitalFilter] = useState('');
+  const [hospitals, setHospitals] = useState<{ _id: string; name: string }[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const limit = 20;
 
@@ -37,6 +40,7 @@ export default function LabPage() {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
+    if (hospitalFilter) params.set('hospital', hospitalFilter);
 
     try {
       const res = await fetch(`/api/lab?${params}`);
@@ -44,9 +48,20 @@ export default function LabPage() {
       if (json.success) { setLabs(json.data); setTotal(json.pagination.total); }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [page, search, statusFilter]);
+  }, [page, search, statusFilter, hospitalFilter]);
 
   useEffect(() => { fetchLabs(); }, [fetchLabs]);
+
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        const res = await fetch('/api/settings/hospitals?status=active');
+        const json = await res.json();
+        if (json.success) setHospitals(json.data);
+      } catch (err) { console.error(err); }
+    };
+    fetchHospitals();
+  }, []);
 
   const [searchInput, setSearchInput] = useState('');
   useEffect(() => {
@@ -87,6 +102,14 @@ export default function LabPage() {
       render: (r: Record<string, unknown>) => {
         const row = r as unknown as LabRow;
         return row.doctor ? `Dr. ${row.doctor.firstName} ${row.doctor.lastName}` : '—';
+      },
+    },
+    {
+      key: 'hospital',
+      label: 'Hospital',
+      render: (r: Record<string, unknown>) => {
+        const row = r as unknown as LabRow;
+        return row.hospital?.name || <span style={{ color: 'var(--muted)' }}>—</span>;
       },
     },
     {
@@ -135,6 +158,10 @@ export default function LabPage() {
           <option value="in-progress">In Progress</option>
           <option value="completed">Completed</option>
           <option value="validated">Validated</option>
+        </select>
+        <select className={s.filterSelect} value={hospitalFilter} onChange={(e) => { setHospitalFilter(e.target.value); setPage(1); }}>
+          <option value="">All Hospitals</option>
+          {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
         </select>
       </div>
 

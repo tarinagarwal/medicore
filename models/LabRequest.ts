@@ -24,6 +24,7 @@ const LabRequestSchema = new Schema<LabRequestDocument>(
     validatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     validatedAt: { type: Date, default: null },
     notes: { type: String, default: '' },
+    hospital: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },
   },
   { timestamps: true }
 );

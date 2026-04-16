@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Appointment from '@/models/Appointment';
+import Hospital from '@/models/Hospital';
 import { getSession } from '@/lib/session';
 import { logActivity } from '@/lib/activityLog';
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    // Ensure Hospital model is registered
+    Hospital;
     const session = await getSession();
     if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
@@ -19,6 +22,7 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';
     const search = searchParams.get('search') || '';
+    const hospital = searchParams.get('hospital') || '';
     const view = searchParams.get('view') || ''; // 'today' for dashboard
 
     const filter: Record<string, unknown> = {};
@@ -26,6 +30,7 @@ export async function GET(request: NextRequest) {
     if (status) filter.status = status;
     if (department) filter.department = department;
     if (doctor) filter.doctor = doctor;
+    if (hospital) filter.hospital = hospital;
 
     if (view === 'today') {
       const now = new Date();
@@ -92,7 +97,7 @@ export async function POST(request: NextRequest) {
     const appointment = await Appointment.create({
       ...body,
       createdBy: session.user.id,
-      hospital: body.hospital || session.user.hospital || null,
+      hospital: body.hospital && body.hospital !== '' ? body.hospital : (session.user.hospital || null),
     });
 
     await logActivity({ action: `Appointment in ${body.department}`, module: 'appointment', details: 'scheduled', userId: session.user.id, refId: appointment._id.toString(), color: 'var(--purple)' });

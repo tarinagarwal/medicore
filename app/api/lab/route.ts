@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import LabRequest from '@/models/LabRequest';
+import Hospital from '@/models/Hospital';
 import { getSession } from '@/lib/session';
 import { logActivity } from '@/lib/activityLog';
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    // Ensure Hospital model is registered
+    Hospital;
     const session = await getSession();
     if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
@@ -16,10 +19,12 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
     const patient = searchParams.get('patient') || '';
+    const hospital = searchParams.get('hospital') || '';
 
     const filter: Record<string, unknown> = {};
     if (status) filter.status = status;
     if (patient) filter.patient = patient;
+    if (hospital) filter.hospital = hospital;
     if (search) {
       filter.$or = [
         { requestId: { $regex: search, $options: 'i' } },
@@ -31,6 +36,7 @@ export async function GET(request: NextRequest) {
       LabRequest.find(filter)
         .populate('patient', 'firstName lastName patientId')
         .populate('doctor', 'firstName lastName')
+        .populate('hospital', 'name')
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -53,18 +59,26 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const last = await LabRequest.findOne().sort({ createdAt: -1 }).select('requestId').lean() as { requestId?: string } | null;
+    // Find the highest request number for the current year
+    const year = new Date().getFullYear();
+    const lastRequests = await LabRequest.find({ requestId: { $regex: `^L-${year}-` } })
+      .select('requestId')
+      .sort({ requestId: -1 })
+      .limit(1)
+      .lean() as { requestId?: string }[];
+    
     let seq = 1;
-    if (last?.requestId) {
-      const parts = last.requestId.split('-');
+    if (lastRequests.length > 0 && lastRequests[0].requestId) {
+      const parts = lastRequests[0].requestId.split('-');
       seq = parseInt(parts[parts.length - 1]) + 1;
     }
-    const requestId = `L-${new Date().getFullYear()}-${String(seq).padStart(4, '0')}`;
+    const requestId = `L-${year}-${String(seq).padStart(4, '0')}`;
 
     const labRequest = await LabRequest.create({
       ...body,
       requestId,
       doctor: body.doctor || session.user.id,
+      hospital: body.hospital && body.hospital !== '' ? body.hospital : (session.user.hospital || null),
     });
 
     await logActivity({ action: `Lab request ${requestId}`, module: 'lab', details: 'created', userId: session.user.id, refId: labRequest._id.toString(), color: 'var(--accent2)' });

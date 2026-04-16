@@ -28,6 +28,7 @@ const InvoiceSchema = new Schema<InvoiceDocument>(
     }],
     notes: { type: String, default: '' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    hospital: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },
   },
   { timestamps: true }
 );

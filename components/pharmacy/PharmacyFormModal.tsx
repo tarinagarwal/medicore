@@ -7,14 +7,16 @@ import styles from '@/styles/ui.module.css';
 
 const categories = ['Antibiotics', 'Analgesics', 'Gastroenterology', 'Diabetes', 'Cardiology', 'Dermatology', 'Respiratory', 'Vitamins', 'Other'];
 
+interface HospitalOption { _id: string; name: string; }
+
 interface PharmacyFormData {
   name: string; category: string; quantity: number; unit: string;
-  minThreshold: number; supplier: string; expiryDate: string; unitPrice: number;
+  minThreshold: number; supplier: string; expiryDate: string; unitPrice: number; hospital: string;
 }
 
 const emptyForm: PharmacyFormData = {
   name: '', category: '', quantity: 0, unit: 'tablets',
-  minThreshold: 10, supplier: '', expiryDate: '', unitPrice: 0,
+  minThreshold: 10, supplier: '', expiryDate: '', unitPrice: 0, hospital: '',
 };
 
 interface Props {
@@ -26,11 +28,20 @@ interface Props {
 
 export default function PharmacyFormModal({ open, onClose, onSaved, editData }: Props) {
   const [form, setForm] = useState<PharmacyFormData>(emptyForm);
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!open) return;
+    fetch('/api/settings/hospitals').then(r => r.json()).then(j => {
+      if (j.success) setHospitals(j.data.filter((h: HospitalOption & { isActive: boolean }) => h.isActive));
+    });
+  }, [open]);
+
+  useEffect(() => {
     if (editData) {
+      const hosp = editData.hospital;
       setForm({
         name: String(editData.name || ''),
         category: String(editData.category || ''),
@@ -40,6 +51,7 @@ export default function PharmacyFormModal({ open, onClose, onSaved, editData }: 
         supplier: String(editData.supplier || ''),
         expiryDate: editData.expiryDate ? String(editData.expiryDate).slice(0, 10) : '',
         unitPrice: Number(editData.unitPrice || 0),
+        hospital: typeof hosp === 'object' && hosp !== null ? (hosp as HospitalOption)._id : String(hosp || ''),
       });
     } else {
       setForm(emptyForm);
@@ -119,6 +131,13 @@ export default function PharmacyFormModal({ open, onClose, onSaved, editData }: 
         <div className={styles.formGroup}>
           <label className={styles.formLabel}>Supplier</label>
           <input className={styles.formInput} value={form.supplier} onChange={(e) => set('supplier', e.target.value)} placeholder="Supplier name" />
+        </div>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Hospital</label>
+          <select className={styles.formSelect} value={form.hospital} onChange={(e) => set('hospital', e.target.value)}>
+            <option value="">No hospital (centralized)</option>
+            {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
+          </select>
         </div>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
           <Button variant="secondary" type="button" onClick={onClose}>Cancel</Button>

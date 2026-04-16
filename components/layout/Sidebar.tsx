@@ -86,7 +86,7 @@ export default function Sidebar() {
   return (
     <aside className={styles.sidebar}>
       {/* Logo */}
-      <div className={styles.logo}>
+      <Link href="/dashboard" className={styles.logo}>
         <div className={styles.logoMark}>
           <div className={styles.logoIcon}>
             <svg viewBox="0 0 24 24">
@@ -98,7 +98,7 @@ export default function Sidebar() {
             <div className={styles.logoSub}>Clinic System</div>
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className={styles.nav}>

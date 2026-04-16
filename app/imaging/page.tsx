@@ -16,6 +16,7 @@ interface ImagingRow {
   studyId: string;
   patient: { firstName: string; lastName: string; patientId: string } | null;
   doctor: { firstName: string; lastName: string } | null;
+  hospital: { _id: string; name: string } | null;
   type: string;
   bodyPart: string;
   status: string;
@@ -35,6 +36,8 @@ export default function ImagingPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [hospitalFilter, setHospitalFilter] = useState('');
+  const [hospitals, setHospitals] = useState<{ _id: string; name: string }[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const limit = 20;
 
@@ -44,6 +47,7 @@ export default function ImagingPage() {
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
     if (typeFilter) params.set('type', typeFilter);
+    if (hospitalFilter) params.set('hospital', hospitalFilter);
 
     try {
       const res = await fetch(`/api/imaging?${params}`);
@@ -51,9 +55,20 @@ export default function ImagingPage() {
       if (json.success) { setStudies(json.data); setTotal(json.pagination.total); }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [page, search, statusFilter, typeFilter]);
+  }, [page, search, statusFilter, typeFilter, hospitalFilter]);
 
   useEffect(() => { fetchStudies(); }, [fetchStudies]);
+
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        const res = await fetch('/api/settings/hospitals?status=active');
+        const json = await res.json();
+        if (json.success) setHospitals(json.data);
+      } catch (err) { console.error(err); }
+    };
+    fetchHospitals();
+  }, []);
 
   const [searchInput, setSearchInput] = useState('');
   useEffect(() => {
@@ -80,6 +95,14 @@ export default function ImagingPage() {
     {
       key: 'doctor', label: 'Doctor',
       render: (r: Record<string, unknown>) => { const row = r as unknown as ImagingRow; return row.doctor ? `Dr. ${row.doctor.firstName} ${row.doctor.lastName}` : '—'; },
+    },
+    {
+      key: 'hospital',
+      label: 'Hospital',
+      render: (r: Record<string, unknown>) => {
+        const row = r as unknown as ImagingRow;
+        return row.hospital?.name || <span style={{ color: 'var(--muted)' }}>—</span>;
+      },
     },
     {
       key: 'status', label: 'Status',
@@ -116,6 +139,10 @@ export default function ImagingPage() {
         <select className={s.filterSelect} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
           <option value="">All Statuses</option>
           <option value="requested">Requested</option><option value="scheduled">Scheduled</option><option value="completed">Completed</option><option value="archived">Archived</option>
+        </select>
+        <select className={s.filterSelect} value={hospitalFilter} onChange={(e) => { setHospitalFilter(e.target.value); setPage(1); }}>
+          <option value="">All Hospitals</option>
+          {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
         </select>
       </div>
       <Card>

@@ -18,6 +18,7 @@ const PharmacyItemSchema = new Schema<PharmacyItemDocument>(
       enum: ['in-stock', 'low-stock', 'out-of-stock'],
       default: 'in-stock',
     },
+    hospital: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },
   },
   { timestamps: true }
 );

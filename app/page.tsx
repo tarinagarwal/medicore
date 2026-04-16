@@ -35,8 +35,8 @@ export default function LandingPage() {
         </div>
 
         <div className={s.navBtns}>
+          <Link href="/contact" className={s.btnOutline} style={{ marginRight: '8px' }}>Need Help?</Link>
           <Link href="/login" className={s.btnOutline}>Log In</Link>
-          <Link href="/signup" className={s.btnPrimary}>Sign Up</Link>
         </div>
       </nav>
 
@@ -63,11 +63,8 @@ export default function LandingPage() {
           </p>
 
           <div className={s.heroBtns}>
-            <Link href="/signup" className={s.btnHeroPrimary}>
-              Get Started Free <ArrowRight size={18} />
-            </Link>
-            <Link href="/login" className={s.btnHeroSecondary}>
-              <Zap size={18} /> Log In to Dashboard
+            <Link href="/login" className={s.btnHeroPrimary}>
+              Log In to Dashboard <ArrowRight size={18} />
             </Link>
           </div>
         </div>

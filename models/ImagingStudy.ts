@@ -22,6 +22,7 @@ const ImagingStudySchema = new Schema<ImagingStudyDocument>(
     report: { type: String, default: '' },
     attachments: [{ fileName: String, url: String }],
     notes: { type: String, default: '' },
+    hospital: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },
   },
   { timestamps: true }
 );

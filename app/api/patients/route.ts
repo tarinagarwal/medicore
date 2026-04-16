@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Patient from '@/models/Patient';
+import Hospital from '@/models/Hospital';
 import { getSession } from '@/lib/session';
 import { logActivity } from '@/lib/activityLog';
 
@@ -8,6 +9,8 @@ import { logActivity } from '@/lib/activityLog';
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    // Ensure Hospital model is registered
+    Hospital;
     const session = await getSession();
     if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
@@ -17,6 +20,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category') || '';
     const status = searchParams.get('status') || '';
+    const hospital = searchParams.get('hospital') || '';
 
     const filter: Record<string, unknown> = {};
 
@@ -32,9 +36,11 @@ export async function GET(request: NextRequest) {
 
     if (category) filter.category = category;
     if (status) filter.status = status;
+    if (hospital) filter.hospital = hospital;
 
     const [data, total] = await Promise.all([
       Patient.find(filter)
+        .populate('hospital', 'name')
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -66,20 +72,25 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    // Auto-generate patientId
-    const lastPatient = await Patient.findOne().sort({ createdAt: -1 }).select('patientId').lean() as { patientId?: string } | null;
+    // Find the highest patient number for the current year
+    const year = new Date().getFullYear();
+    const lastPatients = await Patient.find({ patientId: { $regex: `^P-${year}-` } })
+      .select('patientId')
+      .sort({ patientId: -1 })
+      .limit(1)
+      .lean() as { patientId?: string }[];
+    
     let seq = 1;
-    if (lastPatient?.patientId) {
-      const parts = lastPatient.patientId.split('-');
+    if (lastPatients.length > 0 && lastPatients[0].patientId) {
+      const parts = lastPatients[0].patientId.split('-');
       seq = parseInt(parts[parts.length - 1]) + 1;
     }
-    const year = new Date().getFullYear();
     const patientId = `P-${year}-${String(seq).padStart(4, '0')}`;
 
     const patient = await Patient.create({
       ...body,
       patientId,
-      hospital: body.hospital || session.user.hospital || null,
+      hospital: body.hospital && body.hospital !== '' ? body.hospital : (session.user.hospital || null),
       createdBy: session.user.id,
     });
 

@@ -15,6 +15,7 @@ const imagingTypes = [
 ];
 
 interface PatientOption { _id: string; firstName: string; lastName: string; patientId: string; }
+interface HospitalOption { _id: string; name: string; }
 
 interface Props {
   open: boolean;
@@ -30,26 +31,33 @@ export default function ImagingFormModal({ open, onClose, onSaved, editData }: P
   const [notes, setNotes] = useState('');
   const [report, setReport] = useState('');
   const [status, setStatus] = useState('requested');
+  const [hospital, setHospital] = useState('');
   const [patients, setPatients] = useState<PatientOption[]>([]);
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!open) return;
     fetch('/api/patients?limit=200').then(r => r.json()).then(j => { if (j.success) setPatients(j.data); });
+    fetch('/api/settings/hospitals').then(r => r.json()).then(j => {
+      if (j.success) setHospitals(j.data.filter((h: HospitalOption & { isActive: boolean }) => h.isActive));
+    });
   }, [open]);
 
   useEffect(() => {
     if (editData) {
       const pat = editData.patient;
+      const hosp = editData.hospital;
       setPatient(typeof pat === 'object' && pat !== null ? (pat as PatientOption)._id : String(pat || ''));
       setType(String(editData.type || 'xray'));
       setBodyPart(String(editData.bodyPart || ''));
       setNotes(String(editData.notes || ''));
       setReport(String(editData.report || ''));
       setStatus(String(editData.status || 'requested'));
+      setHospital(typeof hosp === 'object' && hosp !== null ? (hosp as HospitalOption)._id : String(hosp || ''));
     } else {
-      setPatient(''); setType('xray'); setBodyPart(''); setNotes(''); setReport(''); setStatus('requested');
+      setPatient(''); setType('xray'); setBodyPart(''); setNotes(''); setReport(''); setStatus('requested'); setHospital('');
     }
     setError('');
   }, [editData, open]);
@@ -65,7 +73,7 @@ export default function ImagingFormModal({ open, onClose, onSaved, editData }: P
     try {
       const res = await fetch(url, {
         method, headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patient, type, bodyPart, notes, report, ...(editData ? { status } : {}) }),
+        body: JSON.stringify({ patient, type, bodyPart, notes, report, hospital, ...(editData ? { status } : {}) }),
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
@@ -85,6 +93,13 @@ export default function ImagingFormModal({ open, onClose, onSaved, editData }: P
           <select className={styles.formSelect} value={patient} onChange={(e) => setPatient(e.target.value)} required>
             <option value="">Select patient...</option>
             {patients.map(p => <option key={p._id} value={p._id}>{p.firstName} {p.lastName} ({p.patientId})</option>)}
+          </select>
+        </div>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Hospital</label>
+          <select className={styles.formSelect} value={hospital} onChange={(e) => setHospital(e.target.value)}>
+            <option value="">No hospital (centralized)</option>
+            {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
           </select>
         </div>
         <div className={styles.formRow}>

@@ -16,6 +16,7 @@ interface RecordRow {
   recordId: string;
   patient: { _id: string; firstName: string; lastName: string; patientId: string } | null;
   doctor: { firstName: string; lastName: string } | null;
+  hospital: { _id: string; name: string } | null;
   type: string;
   content: { chiefComplaint: string; diagnosis: string };
   createdAt: string;
@@ -37,6 +38,8 @@ export default function RecordsPage() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [hospitalFilter, setHospitalFilter] = useState('');
+  const [hospitals, setHospitals] = useState<{ _id: string; name: string }[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const limit = 20;
 
@@ -45,6 +48,7 @@ export default function RecordsPage() {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (search) params.set('search', search);
     if (typeFilter) params.set('type', typeFilter);
+    if (hospitalFilter) params.set('hospital', hospitalFilter);
 
     try {
       const res = await fetch(`/api/records?${params}`);
@@ -52,9 +56,20 @@ export default function RecordsPage() {
       if (json.success) { setRecords(json.data); setTotal(json.pagination.total); }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [page, search, typeFilter]);
+  }, [page, search, typeFilter, hospitalFilter]);
 
   useEffect(() => { fetchRecords(); }, [fetchRecords]);
+
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        const res = await fetch('/api/settings/hospitals?status=active');
+        const json = await res.json();
+        if (json.success) setHospitals(json.data);
+      } catch (err) { console.error(err); }
+    };
+    fetchHospitals();
+  }, []);
 
   const [searchInput, setSearchInput] = useState('');
   useEffect(() => {
@@ -98,6 +113,14 @@ export default function RecordsPage() {
       },
     },
     {
+      key: 'hospital',
+      label: 'Hospital',
+      render: (r: Record<string, unknown>) => {
+        const row = r as unknown as RecordRow;
+        return row.hospital?.name || <span style={{ color: 'var(--muted)' }}>—</span>;
+      },
+    },
+    {
       key: 'createdAt',
       label: 'Date',
       render: (r: Record<string, unknown>) => formatDateShort(new Date((r as unknown as RecordRow).createdAt)),
@@ -125,6 +148,10 @@ export default function RecordsPage() {
           <option value="treatment">Treatment</option>
           <option value="vitals">Vitals</option>
           <option value="prescription">Prescription</option>
+        </select>
+        <select className={s.filterSelect} value={hospitalFilter} onChange={(e) => { setHospitalFilter(e.target.value); setPage(1); }}>
+          <option value="">All Hospitals</option>
+          {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
         </select>
       </div>
 

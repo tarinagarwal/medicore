@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import PharmacyItem from '@/models/PharmacyItem';
+import Hospital from '@/models/Hospital';
 import { getSession } from '@/lib/session';
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    // Ensure Hospital model is registered
+    Hospital;
     const session = await getSession();
     if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
@@ -15,10 +18,12 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
     const category = searchParams.get('category') || '';
+    const hospital = searchParams.get('hospital') || '';
 
     const filter: Record<string, unknown> = {};
     if (status) filter.status = status;
     if (category) filter.category = category;
+    if (hospital) filter.hospital = hospital;
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -28,6 +33,7 @@ export async function GET(request: NextRequest) {
 
     const [data, total] = await Promise.all([
       PharmacyItem.find(filter)
+        .populate('hospital', 'name')
         .sort({ status: 1, name: 1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -57,7 +63,10 @@ export async function POST(request: NextRequest) {
       else body.status = 'in-stock';
     }
 
-    const item = await PharmacyItem.create(body);
+    const item = await PharmacyItem.create({
+      ...body,
+      hospital: body.hospital && body.hospital !== '' ? body.hospital : (session.user.hospital || null),
+    });
     return NextResponse.json({ success: true, data: item }, { status: 201 });
   } catch (error) {
     console.error('Pharmacy POST error:', error);

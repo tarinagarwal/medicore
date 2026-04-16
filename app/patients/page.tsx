@@ -24,6 +24,7 @@ interface PatientRow {
   category: string;
   status: string;
   createdAt: string;
+  hospital: { _id: string; name: string } | null;
   address: { street: string; city: string; region: string; postalCode: string };
   insuranceInfo: { provider: string; policyNumber: string };
   emergencyContact: { name: string; phone: string; relationship: string };
@@ -49,9 +50,18 @@ export default function PatientsPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
+  const [hospitalFilter, setHospitalFilter] = useState('');
+  const [hospitals, setHospitals] = useState<{ _id: string; name: string }[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editPatient, setEditPatient] = useState<PatientRow | null>(null);
   const limit = 20;
+
+  // Fetch hospitals for filter
+  useEffect(() => {
+    fetch('/api/settings/hospitals').then(r => r.json()).then(j => {
+      if (j.success) setHospitals(j.data.filter((h: { isActive: boolean }) => h.isActive));
+    });
+  }, []);
 
   const fetchPatients = useCallback(async () => {
     setLoading(true);
@@ -59,6 +69,7 @@ export default function PatientsPage() {
     if (search) params.set('search', search);
     if (category) params.set('category', category);
     if (status) params.set('status', status);
+    if (hospitalFilter) params.set('hospital', hospitalFilter);
 
     try {
       const res = await fetch(`/api/patients?${params}`);
@@ -72,7 +83,7 @@ export default function PatientsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, category, status]);
+  }, [page, search, category, status, hospitalFilter]);
 
   useEffect(() => { fetchPatients(); }, [fetchPatients]);
 
@@ -115,6 +126,14 @@ export default function PatientsPage() {
     },
     { key: 'phone', label: 'Phone' },
     {
+      key: 'hospital',
+      label: 'Hospital',
+      render: (r: Record<string, unknown>) => {
+        const row = r as unknown as PatientRow;
+        return row.hospital ? row.hospital.name : <span style={{ color: 'var(--muted)' }}>—</span>;
+      },
+    },
+    {
       key: 'category',
       label: 'Category',
       render: (r: Record<string, unknown>) => <StatusBadge status={(r as unknown as PatientRow).category} />,
@@ -152,6 +171,10 @@ export default function PatientsPage() {
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
+        <select className={s.filterSelect} value={hospitalFilter} onChange={(e) => { setHospitalFilter(e.target.value); setPage(1); }}>
+          <option value="">All Hospitals</option>
+          {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
+        </select>
         <select className={s.filterSelect} value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }}>
           <option value="">All Categories</option>
           <option value="outpatient">Outpatient</option>

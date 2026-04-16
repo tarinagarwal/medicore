@@ -13,6 +13,7 @@ import s from '@/styles/pharmacy.module.css';
 interface PharmacyRow {
   _id: string; name: string; category: string; quantity: number; unit: string;
   minThreshold: number; supplier: string; expiryDate: string; unitPrice: number; status: string;
+  hospital: { _id: string; name: string } | null;
 }
 
 export default function PharmacyPage() {
@@ -23,6 +24,8 @@ export default function PharmacyPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [hospitalFilter, setHospitalFilter] = useState('');
+  const [hospitals, setHospitals] = useState<{ _id: string; name: string }[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<PharmacyRow | null>(null);
   const limit = 20;
@@ -33,6 +36,7 @@ export default function PharmacyPage() {
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
     if (categoryFilter) params.set('category', categoryFilter);
+    if (hospitalFilter) params.set('hospital', hospitalFilter);
 
     try {
       const res = await fetch(`/api/pharmacy?${params}`);
@@ -40,9 +44,20 @@ export default function PharmacyPage() {
       if (json.success) { setItems(json.data); setTotal(json.pagination.total); }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [page, search, statusFilter, categoryFilter]);
+  }, [page, search, statusFilter, categoryFilter, hospitalFilter]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
+
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        const res = await fetch('/api/settings/hospitals?status=active');
+        const json = await res.json();
+        if (json.success) setHospitals(json.data);
+      } catch (err) { console.error(err); }
+    };
+    fetchHospitals();
+  }, []);
 
   const [searchInput, setSearchInput] = useState('');
   useEffect(() => {
@@ -86,6 +101,14 @@ export default function PharmacyPage() {
     },
     { key: 'supplier', label: 'Supplier' },
     {
+      key: 'hospital',
+      label: 'Hospital',
+      render: (r: Record<string, unknown>) => {
+        const row = r as unknown as PharmacyRow;
+        return row.hospital?.name || <span style={{ color: 'var(--muted)' }}>—</span>;
+      },
+    },
+    {
       key: 'expiryDate', label: 'Expires',
       render: (r: Record<string, unknown>) => {
         const row = r as unknown as PharmacyRow;
@@ -120,6 +143,10 @@ export default function PharmacyPage() {
           {['Antibiotics', 'Analgesics', 'Gastroenterology', 'Diabetes', 'Cardiology', 'Dermatology', 'Respiratory', 'Vitamins', 'Other'].map(c =>
             <option key={c} value={c}>{c}</option>
           )}
+        </select>
+        <select className={s.filterSelect} value={hospitalFilter} onChange={(e) => { setHospitalFilter(e.target.value); setPage(1); }}>
+          <option value="">All Hospitals</option>
+          {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
         </select>
       </div>
       <Card>

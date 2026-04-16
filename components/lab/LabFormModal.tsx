@@ -7,11 +7,12 @@ import styles from '@/styles/ui.module.css';
 
 interface LabFormData {
   patient: string;
+  hospital: string;
   tests: { name: string; category: string }[];
   notes: string;
 }
 
-const emptyForm: LabFormData = { patient: '', tests: [{ name: '', category: '' }], notes: '' };
+const emptyForm: LabFormData = { patient: '', hospital: '', tests: [{ name: '', category: '' }], notes: '' };
 
 const testCategories = ['Hematology', 'Biochemistry', 'Endocrinology', 'Microbiology', 'Immunology', 'Urinalysis'];
 const commonTests: Record<string, string[]> = {
@@ -24,6 +25,7 @@ const commonTests: Record<string, string[]> = {
 };
 
 interface PatientOption { _id: string; firstName: string; lastName: string; patientId: string; }
+interface HospitalOption { _id: string; name: string; }
 
 interface Props {
   open: boolean;
@@ -34,6 +36,7 @@ interface Props {
 export default function LabFormModal({ open, onClose, onSaved }: Props) {
   const [form, setForm] = useState<LabFormData>(emptyForm);
   const [patients, setPatients] = useState<PatientOption[]>([]);
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,6 +44,9 @@ export default function LabFormModal({ open, onClose, onSaved }: Props) {
     if (!open) return;
     fetch('/api/patients?limit=200').then(r => r.json()).then(j => {
       if (j.success) setPatients(j.data);
+    });
+    fetch('/api/settings/hospitals').then(r => r.json()).then(j => {
+      if (j.success) setHospitals(j.data.filter((h: HospitalOption & { isActive: boolean }) => h.isActive));
     });
     setForm(emptyForm);
     setError('');
@@ -104,6 +110,14 @@ export default function LabFormModal({ open, onClose, onSaved }: Props) {
           <select className={styles.formSelect} value={form.patient} onChange={(e) => setForm(p => ({ ...p, patient: e.target.value }))} required>
             <option value="">Select patient...</option>
             {patients.map(p => <option key={p._id} value={p._id}>{p.firstName} {p.lastName} ({p.patientId})</option>)}
+          </select>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Hospital</label>
+          <select className={styles.formSelect} value={form.hospital} onChange={(e) => setForm(p => ({ ...p, hospital: e.target.value }))}>
+            <option value="">No hospital (centralized)</option>
+            {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
           </select>
         </div>
 

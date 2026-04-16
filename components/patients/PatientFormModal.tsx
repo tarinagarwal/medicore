@@ -13,6 +13,7 @@ interface PatientFormData {
   phone: string;
   email: string;
   category: string;
+  hospital: string;
   address: { street: string; city: string; region: string; postalCode: string };
   insuranceInfo: { provider: string; policyNumber: string };
   emergencyContact: { name: string; phone: string; relationship: string };
@@ -20,7 +21,7 @@ interface PatientFormData {
 
 const emptyForm: PatientFormData = {
   firstName: '', lastName: '', dateOfBirth: '', gender: 'male',
-  phone: '', email: '', category: 'outpatient',
+  phone: '', email: '', category: 'outpatient', hospital: '',
   address: { street: '', city: '', region: '', postalCode: '' },
   insuranceInfo: { provider: '', policyNumber: '' },
   emergencyContact: { name: '', phone: '', relationship: '' },
@@ -35,8 +36,17 @@ interface Props {
 
 export default function PatientFormModal({ open, onClose, onSaved, editData }: Props) {
   const [form, setForm] = useState<PatientFormData>(emptyForm);
+  const [hospitals, setHospitals] = useState<Array<{ _id: string; name: string; isActive: boolean }>>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    // Fetch hospitals
+    fetch('/api/settings/hospitals').then(r => r.json()).then(j => {
+      if (j.success) setHospitals(j.data.filter((h: { isActive: boolean }) => h.isActive));
+    }).catch(() => {});
+  }, [open]);
 
   useEffect(() => {
     if (editData) {
@@ -48,6 +58,7 @@ export default function PatientFormModal({ open, onClose, onSaved, editData }: P
         phone: editData.phone,
         email: editData.email,
         category: editData.category,
+        hospital: typeof editData.hospital === 'object' ? (editData.hospital as { _id: string })?._id || '' : editData.hospital || '',
         address: editData.address || emptyForm.address,
         insuranceInfo: editData.insuranceInfo || emptyForm.insuranceInfo,
         emergencyContact: editData.emergencyContact || emptyForm.emergencyContact,
@@ -151,6 +162,16 @@ export default function PatientFormModal({ open, onClose, onSaved, editData }: P
             <option value="hospitalized">Hospitalized</option>
             <option value="external">External</option>
             <option value="emergency">Emergency</option>
+          </select>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Hospital</label>
+          <select className={styles.formSelect} value={form.hospital} onChange={(e) => set('hospital', e.target.value)}>
+            <option value="">No hospital (centralized)</option>
+            {hospitals.map((h) => (
+              <option key={h._id} value={h._id}>{h.name}</option>
+            ))}
           </select>
         </div>
 

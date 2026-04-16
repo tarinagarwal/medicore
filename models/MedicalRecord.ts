@@ -37,6 +37,7 @@ const MedicalRecordSchema = new Schema<MedicalRecordDocument>(
       type: { type: String, enum: ['lab', 'imaging'] },
       refId: { type: Schema.Types.ObjectId },
     }],
+    hospital: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },
   },
   { timestamps: true }
 );

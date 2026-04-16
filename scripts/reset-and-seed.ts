@@ -125,6 +125,14 @@ async function seedDashboard() {
   await mongoose.connect(MONGODB_URI);
 
   // Define schemas
+  const HospitalSchema = new mongoose.Schema({
+    name: String,
+    address: String,
+    phone: String,
+    email: String,
+    isActive: { type: Boolean, default: true },
+  }, { timestamps: true });
+
   const PatientSchema = new mongoose.Schema({
     patientId: { type: String, unique: true },
     firstName: String, lastName: String,
@@ -134,6 +142,7 @@ async function seedDashboard() {
     insuranceInfo: { provider: String, policyNumber: String },
     emergencyContact: { name: String, phone: String, relationship: String },
     category: String, status: { type: String, default: 'active' },
+    hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },
     createdBy: mongoose.Schema.Types.ObjectId,
   }, { timestamps: true });
 
@@ -172,6 +181,7 @@ async function seedDashboard() {
     status: String,
     results: [{ testName: String, value: String, unit: String, referenceRange: String, flag: String }],
     validatedBy: mongoose.Schema.Types.ObjectId, validatedAt: Date, notes: String,
+    hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },
   }, { timestamps: true });
 
   const InvoiceSchema = new mongoose.Schema({
@@ -180,7 +190,9 @@ async function seedDashboard() {
     items: [{ description: String, category: String, amount: Number }],
     totalAmount: Number, paidAmount: Number, status: String,
     payments: [{ amount: Number, method: String, paidAt: Date, notes: String }],
-    notes: String, createdBy: mongoose.Schema.Types.ObjectId,
+    notes: String,
+    hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },
+    createdBy: mongoose.Schema.Types.ObjectId,
   }, { timestamps: true });
 
   const MedicalRecordSchema = new mongoose.Schema({
@@ -189,6 +201,7 @@ async function seedDashboard() {
     doctor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     type: String,
     content: { chiefComplaint: String, examination: String, diagnosis: String, treatmentPlan: String, notes: String },
+    hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },
   }, { timestamps: true });
 
   const ImagingStudySchema = new mongoose.Schema({
@@ -196,14 +209,17 @@ async function seedDashboard() {
     patient: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient' },
     doctor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     type: String, bodyPart: String, status: String, report: String, notes: String,
+    hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },
   }, { timestamps: true });
 
   const PharmacyItemSchema = new mongoose.Schema({
     name: String, category: String, quantity: Number, unit: String,
     minThreshold: Number, supplier: String, expiryDate: Date, unitPrice: Number, status: String,
+    hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },
   }, { timestamps: true });
 
   // Create models
+  const Hospital = mongoose.model('Hospital', HospitalSchema);
   const Patient = mongoose.model('Patient', PatientSchema);
   const Appointment = mongoose.model('Appointment', AppointmentSchema);
   const Alert = mongoose.model('Alert', AlertSchema);
@@ -218,38 +234,52 @@ async function seedDashboard() {
   // Get user IDs
   const admin = await User.findOne({ email: 'admin@medicore.com' });
   const doctor = await User.findOne({ email: 'doctor@medicore.com' });
+  const receptionist = await User.findOne({ email: 'receptionist@medicore.com' });
 
-  if (!admin || !doctor) {
+  if (!admin || !doctor || !receptionist) {
     console.error('❌ Users not found. Run seed users first!');
     process.exit(1);
   }
 
+  // Create hospitals
+  const hospitals = await Hospital.insertMany([
+    { name: 'Centre Hospitalier Universitaire', address: 'Casablanca', phone: '+212522000001', email: 'contact@chu.ma', isActive: true },
+    { name: 'Clinique Al Madina', address: 'Rabat', phone: '+212537000002', email: 'info@almadina.ma', isActive: true },
+    { name: 'Hôpital Ibn Sina', address: 'Marrakech', phone: '+212524000003', email: 'contact@ibnsina.ma', isActive: true },
+  ]);
+  console.log(`  ✓ Created ${hospitals.length} hospitals`);
+
+  // Assign hospitals to some users
+  await User.findByIdAndUpdate(doctor._id, { hospital: hospitals[0]._id });
+  await User.findByIdAndUpdate(receptionist._id, { hospital: hospitals[0]._id });
+  console.log('  ✓ Assigned hospitals to users');
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Create patients
+  // Create patients (mix of hospital-assigned and centralized)
   const patients = await Patient.insertMany([
-    { patientId: 'P-2026-0001', firstName: 'Fatima', lastName: 'Alaoui', dateOfBirth: new Date('1981-03-15'), gender: 'female', phone: '+212600000001', category: 'outpatient', createdBy: admin._id },
-    { patientId: 'P-2026-0002', firstName: 'Youssef', lastName: 'Benali', dateOfBirth: new Date('1994-07-22'), gender: 'male', phone: '+212600000002', category: 'emergency', createdBy: admin._id },
-    { patientId: 'P-2026-0003', firstName: 'Nadia', lastName: 'Moussaoui', dateOfBirth: new Date('1998-11-05'), gender: 'female', phone: '+212600000003', category: 'outpatient', createdBy: admin._id },
-    { patientId: 'P-2026-0004', firstName: 'Hamid', lastName: 'Tazi', dateOfBirth: new Date('1959-01-10'), gender: 'male', phone: '+212600000004', category: 'hospitalized', createdBy: admin._id },
-    { patientId: 'P-2026-0005', firstName: 'Sara', lastName: 'Kadiri', dateOfBirth: new Date('2007-06-28'), gender: 'female', phone: '+212600000005', category: 'outpatient', createdBy: admin._id },
-    { patientId: 'P-2026-0006', firstName: 'Omar', lastName: 'Chraibi', dateOfBirth: new Date('1975-09-03'), gender: 'male', phone: '+212600000006', category: 'external', createdBy: admin._id },
-    { patientId: 'P-2026-0007', firstName: 'Laila', lastName: 'Sebti', dateOfBirth: new Date('1988-12-17'), gender: 'female', phone: '+212600000007', category: 'outpatient', createdBy: admin._id },
-    { patientId: 'P-2026-0008', firstName: 'Karim', lastName: 'Berrada', dateOfBirth: new Date('1990-04-20'), gender: 'male', phone: '+212600000008', category: 'hospitalized', createdBy: admin._id },
+    { patientId: 'P-2026-0001', firstName: 'Fatima', lastName: 'Alaoui', dateOfBirth: new Date('1981-03-15'), gender: 'female', phone: '+212600000001', category: 'outpatient', hospital: hospitals[0]._id, createdBy: admin._id },
+    { patientId: 'P-2026-0002', firstName: 'Youssef', lastName: 'Benali', dateOfBirth: new Date('1994-07-22'), gender: 'male', phone: '+212600000002', category: 'emergency', hospital: hospitals[0]._id, createdBy: admin._id },
+    { patientId: 'P-2026-0003', firstName: 'Nadia', lastName: 'Moussaoui', dateOfBirth: new Date('1998-11-05'), gender: 'female', phone: '+212600000003', category: 'outpatient', hospital: hospitals[1]._id, createdBy: admin._id },
+    { patientId: 'P-2026-0004', firstName: 'Hamid', lastName: 'Tazi', dateOfBirth: new Date('1959-01-10'), gender: 'male', phone: '+212600000004', category: 'hospitalized', hospital: hospitals[1]._id, createdBy: admin._id },
+    { patientId: 'P-2026-0005', firstName: 'Sara', lastName: 'Kadiri', dateOfBirth: new Date('2007-06-28'), gender: 'female', phone: '+212600000005', category: 'outpatient', hospital: hospitals[2]._id, createdBy: admin._id },
+    { patientId: 'P-2026-0006', firstName: 'Omar', lastName: 'Chraibi', dateOfBirth: new Date('1975-09-03'), gender: 'male', phone: '+212600000006', category: 'external', hospital: null, createdBy: admin._id },
+    { patientId: 'P-2026-0007', firstName: 'Laila', lastName: 'Sebti', dateOfBirth: new Date('1988-12-17'), gender: 'female', phone: '+212600000007', category: 'outpatient', hospital: null, createdBy: admin._id },
+    { patientId: 'P-2026-0008', firstName: 'Karim', lastName: 'Berrada', dateOfBirth: new Date('1990-04-20'), gender: 'male', phone: '+212600000008', category: 'hospitalized', hospital: null, createdBy: admin._id },
   ]);
   console.log(`  ✓ Created ${patients.length} patients`);
 
-  // Create appointments
+  // Create appointments (mix of hospital-assigned and centralized)
   const appts = await Appointment.insertMany([
-    { patient: patients[0]._id, doctor: doctor._id, department: 'Cardiology', dateTime: new Date(today.getTime() + 9 * 3600000 + 15 * 60000), duration: 30, reason: 'Follow-up', status: 'in-progress', createdBy: admin._id },
-    { patient: patients[1]._id, doctor: doctor._id, department: 'Emergency', dateTime: new Date(today.getTime() + 9 * 3600000 + 40 * 60000), duration: 45, reason: 'Acute pain', status: 'in-progress', createdBy: admin._id },
-    { patient: patients[2]._id, doctor: doctor._id, department: 'Gynecology', dateTime: new Date(today.getTime() + 10 * 3600000), duration: 30, reason: 'Check-up', status: 'confirmed', createdBy: admin._id },
-    { patient: patients[3]._id, doctor: doctor._id, department: 'Neurology', dateTime: new Date(today.getTime() + 10 * 3600000 + 30 * 60000), duration: 30, reason: 'Headache', status: 'confirmed', createdBy: admin._id },
-    { patient: patients[4]._id, doctor: doctor._id, department: 'Pediatrics', dateTime: new Date(today.getTime() + 11 * 3600000), duration: 20, reason: 'Vaccination', status: 'completed', createdBy: admin._id },
-    { patient: patients[5]._id, doctor: doctor._id, department: 'Ophthalmology', dateTime: new Date(today.getTime() + 11 * 3600000 + 30 * 60000), duration: 30, reason: 'Eye exam', status: 'scheduled', createdBy: admin._id },
-    { patient: patients[6]._id, doctor: doctor._id, department: 'Dermatology', dateTime: new Date(today.getTime() + 14 * 3600000), duration: 30, reason: 'Skin rash', status: 'confirmed', createdBy: admin._id },
-    { patient: patients[7]._id, doctor: doctor._id, department: 'Surgery', dateTime: new Date(today.getTime() + 15 * 3600000 + 30 * 60000), duration: 60, reason: 'Pre-op', status: 'in-preparation', createdBy: admin._id },
+    { patient: patients[0]._id, doctor: doctor._id, department: 'Cardiology', dateTime: new Date(today.getTime() + 9 * 3600000 + 15 * 60000), duration: 30, reason: 'Follow-up', status: 'in-progress', createdBy: admin._id, hospital: hospitals[0]._id },
+    { patient: patients[1]._id, doctor: doctor._id, department: 'Emergency', dateTime: new Date(today.getTime() + 9 * 3600000 + 40 * 60000), duration: 45, reason: 'Acute pain', status: 'in-progress', createdBy: admin._id, hospital: hospitals[0]._id },
+    { patient: patients[2]._id, doctor: doctor._id, department: 'Gynecology', dateTime: new Date(today.getTime() + 10 * 3600000), duration: 30, reason: 'Check-up', status: 'confirmed', createdBy: admin._id, hospital: hospitals[1]._id },
+    { patient: patients[3]._id, doctor: doctor._id, department: 'Neurology', dateTime: new Date(today.getTime() + 10 * 3600000 + 30 * 60000), duration: 30, reason: 'Headache', status: 'confirmed', createdBy: admin._id, hospital: hospitals[1]._id },
+    { patient: patients[4]._id, doctor: doctor._id, department: 'Pediatrics', dateTime: new Date(today.getTime() + 11 * 3600000), duration: 20, reason: 'Vaccination', status: 'completed', createdBy: admin._id, hospital: hospitals[2]._id },
+    { patient: patients[5]._id, doctor: doctor._id, department: 'Ophthalmology', dateTime: new Date(today.getTime() + 11 * 3600000 + 30 * 60000), duration: 30, reason: 'Eye exam', status: 'scheduled', createdBy: admin._id, hospital: null },
+    { patient: patients[6]._id, doctor: doctor._id, department: 'Dermatology', dateTime: new Date(today.getTime() + 14 * 3600000), duration: 30, reason: 'Skin rash', status: 'confirmed', createdBy: admin._id, hospital: null },
+    { patient: patients[7]._id, doctor: doctor._id, department: 'Surgery', dateTime: new Date(today.getTime() + 15 * 3600000 + 30 * 60000), duration: 60, reason: 'Pre-op', status: 'in-preparation', createdBy: admin._id, hospital: null },
   ]);
   console.log(`  ✓ Created ${appts.length} appointments`);
 
@@ -275,23 +305,24 @@ async function seedDashboard() {
   ]);
   console.log('  ✓ Created 8 activity logs');
 
-  // Create lab requests
+  // Create lab requests (mix of hospital-assigned and centralized)
   await LabRequest.insertMany([
-    { requestId: 'L-2026-0001', patient: patients[0]._id, doctor: doctor._id, tests: [{ name: 'NFS', category: 'Hematology' }], status: 'validated', results: [{ testName: 'NFS', value: '5.2', unit: '10^9/L', referenceRange: '4.5-11', flag: 'normal' }] },
-    { requestId: 'L-2026-0002', patient: patients[1]._id, doctor: doctor._id, tests: [{ name: 'CRP', category: 'Biochemistry' }], status: 'in-progress' },
-    { requestId: 'L-2026-0003', patient: patients[2]._id, doctor: doctor._id, tests: [{ name: 'TSH', category: 'Endocrinology' }], status: 'requested' },
+    { requestId: 'L-2026-0001', patient: patients[0]._id, doctor: doctor._id, tests: [{ name: 'NFS', category: 'Hematology' }], status: 'validated', results: [{ testName: 'NFS', value: '5.2', unit: '10^9/L', referenceRange: '4.5-11', flag: 'normal' }], hospital: hospitals[0]._id },
+    { requestId: 'L-2026-0002', patient: patients[1]._id, doctor: doctor._id, tests: [{ name: 'CRP', category: 'Biochemistry' }], status: 'in-progress', hospital: hospitals[0]._id },
+    { requestId: 'L-2026-0003', patient: patients[2]._id, doctor: doctor._id, tests: [{ name: 'TSH', category: 'Endocrinology' }], status: 'requested', hospital: hospitals[1]._id },
     ...Array.from({ length: 31 }, (_, i) => ({
       requestId: `L-2026-${String(i + 4).padStart(4, '0')}`,
       patient: patients[i % patients.length]._id, doctor: doctor._id,
       tests: [{ name: ['NFS', 'CRP', 'TSH', 'HbA1c', 'Lipid Panel'][i % 5], category: 'General' }],
       status: 'completed',
+      hospital: i % 3 === 0 ? hospitals[i % hospitals.length]._id : null,
     })),
   ]);
-  console.log('  ✓ Created 23 lab requests');
+  console.log('  ✓ Created 34 lab requests');
 
-  // Create invoices
+  // Create invoices (mix of hospital-assigned and centralized)
   await Invoice.insertMany([
-    { invoiceId: 'F-2026-0001', patient: patients[0]._id, items: [{ description: 'Consultation', category: 'consultation', amount: 300 }], totalAmount: 300, paidAmount: 300, status: 'paid', payments: [{ amount: 300, method: 'cash', paidAt: new Date() }], createdBy: admin._id },
+    { invoiceId: 'F-2026-0001', patient: patients[0]._id, items: [{ description: 'Consultation', category: 'consultation', amount: 300 }], totalAmount: 300, paidAmount: 300, status: 'paid', payments: [{ amount: 300, method: 'cash', paidAt: new Date() }], hospital: hospitals[0]._id, createdBy: admin._id },
     ...Array.from({ length: 17 }, (_, i) => ({
       invoiceId: `F-2026-${String(i + 2).padStart(4, '0')}`,
       patient: patients[i % patients.length]._id,
@@ -299,12 +330,13 @@ async function seedDashboard() {
       totalAmount: 200 + (i * 50), paidAmount: i % 3 === 0 ? 200 + (i * 50) : i % 3 === 1 ? 100 : 0,
       status: i % 3 === 0 ? 'paid' : i % 3 === 1 ? 'partially-paid' : 'unpaid',
       payments: i % 3 !== 2 ? [{ amount: i % 3 === 0 ? 200 + (i * 50) : 100, method: 'cash', paidAt: new Date() }] : [],
+      hospital: i % 2 === 0 ? hospitals[i % hospitals.length]._id : null,
       createdBy: admin._id,
     })),
   ]);
-  console.log('  ✓ Created 17 invoices');
+  console.log('  ✓ Created 18 invoices');
 
-  // Create medical records
+  // Create medical records (mix of hospital-assigned and centralized)
   await MedicalRecord.insertMany(
     patients.slice(0, 5).map((p, i) => ({
       recordId: `R-2026-${String(i + 1).padStart(4, '0')}`,
@@ -312,26 +344,27 @@ async function seedDashboard() {
       doctor: doctor._id,
       type: 'consultation',
       content: { chiefComplaint: 'Routine check', diagnosis: 'Normal', notes: 'No issues' },
+      hospital: i < 3 ? hospitals[i % hospitals.length]._id : null,
     }))
   );
   console.log('  ✓ Created 5 medical records');
 
-  // Create imaging studies
+  // Create imaging studies (mix of hospital-assigned and centralized)
   await ImagingStudy.insertMany([
-    { studyId: 'IMG-2026-0001', patient: patients[0]._id, doctor: doctor._id, type: 'echocardiography', bodyPart: 'Heart', status: 'archived' },
-    { studyId: 'IMG-2026-0002', patient: patients[3]._id, doctor: doctor._id, type: 'mri', bodyPart: 'Brain', status: 'completed' },
-    { studyId: 'IMG-2026-0003', patient: patients[7]._id, doctor: doctor._id, type: 'xray', bodyPart: 'Chest', status: 'requested' },
+    { studyId: 'IMG-2026-0001', patient: patients[0]._id, doctor: doctor._id, type: 'echocardiography', bodyPart: 'Heart', status: 'archived', hospital: hospitals[0]._id },
+    { studyId: 'IMG-2026-0002', patient: patients[3]._id, doctor: doctor._id, type: 'mri', bodyPart: 'Brain', status: 'completed', hospital: hospitals[1]._id },
+    { studyId: 'IMG-2026-0003', patient: patients[7]._id, doctor: doctor._id, type: 'xray', bodyPart: 'Chest', status: 'requested', hospital: null },
   ]);
   console.log('  ✓ Created 3 imaging studies');
 
-  // Create pharmacy items
+  // Create pharmacy items (mix of hospital-assigned and centralized)
   await PharmacyItem.insertMany([
-    { name: 'Amoxicillin 500mg', category: 'Antibiotics', quantity: 14, unit: 'tablets', minThreshold: 50, supplier: 'PharmaCo', expiryDate: new Date('2027-06-01'), unitPrice: 5, status: 'low-stock' },
-    { name: 'Paracetamol 1g', category: 'Analgesics', quantity: 8, unit: 'tablets', minThreshold: 30, supplier: 'MedSupply', expiryDate: new Date('2027-03-15'), unitPrice: 3, status: 'low-stock' },
-    { name: 'Omeprazole 20mg', category: 'Gastroenterology', quantity: 200, unit: 'capsules', minThreshold: 20, supplier: 'PharmaCo', expiryDate: new Date('2027-12-01'), unitPrice: 8, status: 'in-stock' },
-    { name: 'Metformin 850mg', category: 'Diabetes', quantity: 150, unit: 'tablets', minThreshold: 30, supplier: 'DiabCare', expiryDate: new Date('2027-09-01'), unitPrice: 4, status: 'in-stock' },
-    { name: 'Atorvastatin 10mg', category: 'Cardiology', quantity: 100, unit: 'tablets', minThreshold: 20, supplier: 'CardioMed', expiryDate: new Date('2028-01-01'), unitPrice: 10, status: 'in-stock' },
-    { name: 'Ibuprofen 400mg', category: 'Analgesics', quantity: 0, unit: 'tablets', minThreshold: 40, supplier: 'MedSupply', expiryDate: new Date('2027-05-01'), unitPrice: 4, status: 'out-of-stock' },
+    { name: 'Amoxicillin 500mg', category: 'Antibiotics', quantity: 14, unit: 'tablets', minThreshold: 50, supplier: 'PharmaCo', expiryDate: new Date('2027-06-01'), unitPrice: 5, status: 'low-stock', hospital: hospitals[0]._id },
+    { name: 'Paracetamol 1g', category: 'Analgesics', quantity: 8, unit: 'tablets', minThreshold: 30, supplier: 'MedSupply', expiryDate: new Date('2027-03-15'), unitPrice: 3, status: 'low-stock', hospital: hospitals[0]._id },
+    { name: 'Omeprazole 20mg', category: 'Gastroenterology', quantity: 200, unit: 'capsules', minThreshold: 20, supplier: 'PharmaCo', expiryDate: new Date('2027-12-01'), unitPrice: 8, status: 'in-stock', hospital: hospitals[1]._id },
+    { name: 'Metformin 850mg', category: 'Diabetes', quantity: 150, unit: 'tablets', minThreshold: 30, supplier: 'DiabCare', expiryDate: new Date('2027-09-01'), unitPrice: 4, status: 'in-stock', hospital: hospitals[1]._id },
+    { name: 'Atorvastatin 10mg', category: 'Cardiology', quantity: 100, unit: 'tablets', minThreshold: 20, supplier: 'CardioMed', expiryDate: new Date('2028-01-01'), unitPrice: 10, status: 'in-stock', hospital: hospitals[2]._id },
+    { name: 'Ibuprofen 400mg', category: 'Analgesics', quantity: 0, unit: 'tablets', minThreshold: 40, supplier: 'MedSupply', expiryDate: new Date('2027-05-01'), unitPrice: 4, status: 'out-of-stock', hospital: null },
   ]);
   console.log('  ✓ Created 6 pharmacy items');
 

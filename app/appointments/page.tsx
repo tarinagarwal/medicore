@@ -50,6 +50,8 @@ export default function AppointmentsPage() {
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [hospitalFilter, setHospitalFilter] = useState('');
+  const [hospitals, setHospitals] = useState<{ _id: string; name: string }[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editApt, setEditApt] = useState<AppointmentRow | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
@@ -63,6 +65,7 @@ export default function AppointmentsPage() {
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
     if (departmentFilter) params.set('department', departmentFilter);
+    if (hospitalFilter) params.set('hospital', hospitalFilter);
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo) params.set('dateTo', dateTo);
 
@@ -78,9 +81,20 @@ export default function AppointmentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, departmentFilter, dateFrom, dateTo]);
+  }, [page, search, statusFilter, departmentFilter, hospitalFilter, dateFrom, dateTo]);
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
+
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        const res = await fetch('/api/settings/hospitals?status=active');
+        const json = await res.json();
+        if (json.success) setHospitals(json.data);
+      } catch (err) { console.error(err); }
+    };
+    fetchHospitals();
+  }, []);
 
   const [searchInput, setSearchInput] = useState('');
   useEffect(() => {
@@ -238,6 +252,10 @@ export default function AppointmentsPage() {
           {['Cardiology', 'Gynecology', 'Pediatrics', 'Neurology', 'Surgery', 'Ophthalmology', 'Dermatology', 'Emergency', 'General Medicine', 'Orthopedics'].map(d => (
             <option key={d} value={d}>{d}</option>
           ))}
+        </select>
+        <select className={s.filterSelect} value={hospitalFilter} onChange={(e) => { setHospitalFilter(e.target.value); setPage(1); }}>
+          <option value="">All Hospitals</option>
+          {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
         </select>
         <input className={s.dateInput} type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} title="From date" />
         <input className={s.dateInput} type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} title="To date" />

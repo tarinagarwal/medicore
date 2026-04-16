@@ -16,6 +16,14 @@
 .logo {
   padding: 24px 20px;
   border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.logo:hover {
+  opacity: 0.8;
 }
 
 .logoMark {
