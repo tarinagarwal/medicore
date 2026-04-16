@@ -124,9 +124,12 @@ export default function SettingsPage() {
       render: (r: Record<string, unknown>) => {
         const row = r as unknown as UserRow;
         if (!row.hospital) return <span style={{ color: 'var(--muted)' }}>—</span>;
-        if (typeof row.hospital === 'object') return row.hospital.name;
-        const h = hospitals.find(h => h._id === row.hospital);
-        return h ? h.name : '—';
+        if (typeof row.hospital === 'object' && row.hospital?.name) return row.hospital.name;
+        if (typeof row.hospital === 'string') {
+          const h = hospitals.find(h => h._id === row.hospital);
+          return h?.name || <span style={{ color: 'var(--muted)' }}>—</span>;
+        }
+        return <span style={{ color: 'var(--muted)' }}>—</span>;
       },
     },
     {

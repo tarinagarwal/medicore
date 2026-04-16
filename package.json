@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "npx tsx --env-file=.env.local scripts/seed.ts",
-    "seed:dashboard": "npx tsx --env-file=.env.local scripts/seed-dashboard.ts"
+    "seed": "npx tsx --env-file=.env scripts/seed.ts",
+    "seed:dashboard": "npx tsx --env-file=.env scripts/seed-dashboard.ts",
+    "reset": "npx tsx --env-file=.env scripts/reset-and-seed.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

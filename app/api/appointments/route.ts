@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
       Appointment.find(filter)
         .populate('patient', 'firstName lastName patientId gender dateOfBirth')
         .populate('doctor', 'firstName lastName')
+        .populate('hospital', 'name')
         .sort({ dateTime: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
     const appointment = await Appointment.create({
       ...body,
       createdBy: session.user.id,
+      hospital: body.hospital || session.user.hospital || null,
     });
 
     await logActivity({ action: `Appointment in ${body.department}`, module: 'appointment', details: 'scheduled', userId: session.user.id, refId: appointment._id.toString(), color: 'var(--purple)' });

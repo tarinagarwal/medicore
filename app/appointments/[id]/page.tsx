@@ -28,6 +28,7 @@ interface AppointmentDetail {
   intake: IntakeData | null;
   patient: { _id: string; firstName: string; lastName: string; patientId: string; gender: string; dateOfBirth: string; phone: string } | null;
   doctor: { _id: string; firstName: string; lastName: string; department: string } | null;
+  hospital: { _id: string; name: string } | null;
 }
 
 export default function AppointmentDetailPage() {
@@ -174,8 +175,11 @@ export default function AppointmentDetailPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
                 <span style={{ color: 'var(--muted)' }}>Duration</span><span style={{ fontWeight: 500 }}>{apt.duration} min</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
                 <span style={{ color: 'var(--muted)' }}>Department</span><span style={{ fontWeight: 500 }}>{apt.department}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                <span style={{ color: 'var(--muted)' }}>Hospital</span><span style={{ fontWeight: 500 }}>{apt.hospital?.name || '—'}</span>
               </div>
             </div>
           </Card>

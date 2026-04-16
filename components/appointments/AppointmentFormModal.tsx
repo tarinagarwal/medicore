@@ -16,6 +16,7 @@ interface AppointmentFormData {
   reason: string;
   status: string;
   notes: string;
+  hospital: string;
   intake: {
     vitals: { weight: string; bloodPressure: string };
     questions: IntakeQuestion[];
@@ -30,7 +31,7 @@ const defaultQuestions: IntakeQuestion[] = [
 
 const emptyForm: AppointmentFormData = {
   patient: '', doctor: '', department: '', dateTime: '',
-  duration: 30, reason: '', status: 'scheduled', notes: '',
+  duration: 30, reason: '', status: 'scheduled', notes: '', hospital: '',
   intake: { vitals: { weight: '', bloodPressure: '' }, questions: [...defaultQuestions] },
 };
 
@@ -51,6 +52,7 @@ const statuses = [
 
 interface PatientOption { _id: string; firstName: string; lastName: string; patientId: string; }
 interface DoctorOption { _id: string; firstName: string; lastName: string; }
+interface HospitalOption { _id: string; name: string; }
 
 interface Props {
   open: boolean;
@@ -63,6 +65,7 @@ export default function AppointmentFormModal({ open, onClose, onSaved, editData 
   const [form, setForm] = useState<AppointmentFormData>(emptyForm);
   const [patients, setPatients] = useState<PatientOption[]>([]);
   const [doctors, setDoctors] = useState<DoctorOption[]>([]);
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -108,6 +111,11 @@ export default function AppointmentFormModal({ open, onClose, onSaved, editData 
     }).catch(() => {
       // Users API may not exist yet, use empty
     });
+    fetch('/api/settings/hospitals?limit=100').then(r => r.json()).then(j => {
+      if (j.success) setHospitals(j.data.filter((h: HospitalOption & { isActive: boolean }) => h.isActive));
+    }).catch(() => {
+      // Hospitals API may not exist yet, use empty
+    });
   }, [open]);
 
   useEffect(() => {
@@ -117,11 +125,12 @@ export default function AppointmentFormModal({ open, onClose, onSaved, editData 
         doctor: typeof editData.doctor === 'object' ? (editData.doctor as unknown as DoctorOption)._id : editData.doctor,
         department: editData.department,
         dateTime: editData.dateTime?.slice(0, 16) || '',
-        duration: editData.duration,
-        reason: editData.reason,
-        status: editData.status,
-        notes: editData.notes,
-        intake: editData.intake || emptyForm.intake,
+        duration: editData.duration || 30,
+        reason: editData.reason || '',
+        status: editData.status || 'scheduled',
+        notes: editData.notes || '',
+        hospital: typeof editData.hospital === 'object' ? (editData.hospital as unknown as HospitalOption)?._id || '' : editData.hospital || '',
+        intake: editData.intake && editData.intake.vitals ? editData.intake : { vitals: { weight: '', bloodPressure: '' }, questions: [...defaultQuestions] },
       });
     } else {
       setForm({ ...emptyForm, intake: { vitals: { weight: '', bloodPressure: '' }, questions: [...defaultQuestions] } });
@@ -237,6 +246,16 @@ export default function AppointmentFormModal({ open, onClose, onSaved, editData 
           </div>
         </div>
 
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Hospital</label>
+          <select className={styles.formSelect} value={form.hospital} onChange={(e) => set('hospital', e.target.value)}>
+            <option value="">No hospital (centralized)</option>
+            {hospitals.map((h) => (
+              <option key={h._id} value={h._id}>{h.name}</option>
+            ))}
+          </select>
+        </div>
+
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>Date & Time *</label>
@@ -271,23 +290,23 @@ export default function AppointmentFormModal({ open, onClose, onSaved, editData 
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>Weight (kg)</label>
-            <input className={styles.formInput} value={form.intake.vitals.weight} onChange={(e) => setForm(prev => ({ ...prev, intake: { ...prev.intake, vitals: { ...prev.intake.vitals, weight: e.target.value } } }))} placeholder="e.g., 70" />
+            <input className={styles.formInput} value={form.intake?.vitals?.weight || ''} onChange={(e) => setForm(prev => ({ ...prev, intake: { ...prev.intake, vitals: { ...prev.intake.vitals, weight: e.target.value } } }))} placeholder="e.g., 70" />
           </div>
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>Blood Pressure</label>
-            <input className={styles.formInput} value={form.intake.vitals.bloodPressure} onChange={(e) => setForm(prev => ({ ...prev, intake: { ...prev.intake, vitals: { ...prev.intake.vitals, bloodPressure: e.target.value } } }))} placeholder="e.g., 120/80" />
+            <input className={styles.formInput} value={form.intake?.vitals?.bloodPressure || ''} onChange={(e) => setForm(prev => ({ ...prev, intake: { ...prev.intake, vitals: { ...prev.intake.vitals, bloodPressure: e.target.value } } }))} placeholder="e.g., 120/80" />
           </div>
         </div>
 
         <div style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '1px', margin: '12px 0 8px' }}>
           Screening Questions
         </div>
-        {form.intake.questions.map((q, i) => (
+        {(form.intake?.questions || []).map((q, i) => (
           <div key={i} className={styles.formGroup}>
             <label className={styles.formLabel}>{q.question}</label>
             <input className={styles.formInput} value={q.answer} onChange={(e) => {
               setForm(prev => {
-                const questions = [...prev.intake.questions];
+                const questions = [...(prev.intake?.questions || [])];
                 questions[i] = { ...questions[i], answer: e.target.value };
                 return { ...prev, intake: { ...prev.intake, questions } };
               });

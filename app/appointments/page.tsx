@@ -22,6 +22,7 @@ interface AppointmentRow {
   _id: string;
   patient: { _id: string; firstName: string; lastName: string; patientId: string; gender: string; dateOfBirth: string } | null;
   doctor: { _id: string; firstName: string; lastName: string } | null;
+  hospital: { _id: string; name: string } | null;
   department: string;
   dateTime: string;
   duration: number;
@@ -155,6 +156,14 @@ export default function AppointmentsPage() {
       render: (r: Record<string, unknown>) => {
         const row = r as unknown as AppointmentRow;
         return row.doctor ? `Dr. ${row.doctor.firstName} ${row.doctor.lastName}` : '—';
+      },
+    },
+    {
+      key: 'hospital',
+      label: 'Hospital',
+      render: (r: Record<string, unknown>) => {
+        const row = r as unknown as AppointmentRow;
+        return row.hospital ? row.hospital.name : <span style={{ color: 'var(--muted)' }}>—</span>;
       },
     },
     { key: 'reason', label: 'Reason' },

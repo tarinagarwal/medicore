@@ -16,6 +16,7 @@ export async function GET(
     const appointment = await Appointment.findById(id)
       .populate('patient', 'firstName lastName patientId gender dateOfBirth phone')
       .populate('doctor', 'firstName lastName department')
+      .populate('hospital', 'name')
       .lean();
 
     if (!appointment) return NextResponse.json({ success: false, message: 'Appointment not found' }, { status: 404 });
@@ -42,6 +43,7 @@ export async function PUT(
     const appointment = await Appointment.findByIdAndUpdate(id, body, { new: true, runValidators: true })
       .populate('patient', 'firstName lastName patientId')
       .populate('doctor', 'firstName lastName')
+      .populate('hospital', 'name')
       .lean();
 
     if (!appointment) return NextResponse.json({ success: false, message: 'Appointment not found' }, { status: 404 });
