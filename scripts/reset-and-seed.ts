@@ -43,64 +43,56 @@ async function seedUsers() {
 
   const users = [
     {
-      firstName: 'Admin',
-      lastName: 'System',
+      firstName: 'Rachid',
+      lastName: 'Amrani',
       email: 'admin@medicore.com',
       password: await hash('admin123', 12),
       role: 'admin',
       department: 'Administration',
     },
     {
-      firstName: 'Sarah',
-      lastName: 'Johnson',
+      firstName: 'Fatima',
+      lastName: 'Benkirane',
       email: 'doctor@medicore.com',
       password: await hash('doctor123', 12),
       role: 'doctor',
       department: 'Cardiology',
     },
     {
-      firstName: 'Michael',
-      lastName: 'Chen',
-      email: 'doctor2@medicore.com',
-      password: await hash('doctor123', 12),
-      role: 'doctor',
-      department: 'Pediatrics',
-    },
-    {
-      firstName: 'Emily',
-      lastName: 'Davis',
+      firstName: 'Karim',
+      lastName: 'Tazi',
       email: 'nurse@medicore.com',
       password: await hash('nurse123', 12),
       role: 'nurse',
-      department: 'General Care',
+      department: 'General',
     },
     {
-      firstName: 'John',
-      lastName: 'Smith',
+      firstName: 'Nadia',
+      lastName: 'Alaoui',
       email: 'lab@medicore.com',
       password: await hash('lab123', 12),
       role: 'lab-tech',
       department: 'Laboratory',
     },
     {
-      firstName: 'Lisa',
-      lastName: 'Brown',
+      firstName: 'Omar',
+      lastName: 'Sebti',
       email: 'pharmacist@medicore.com',
       password: await hash('pharma123', 12),
       role: 'pharmacist',
       department: 'Pharmacy',
     },
     {
-      firstName: 'Emma',
-      lastName: 'Wilson',
+      firstName: 'Laila',
+      lastName: 'Chraibi',
       email: 'receptionist@medicore.com',
       password: await hash('reception123', 12),
       role: 'receptionist',
       department: 'Reception',
     },
     {
-      firstName: 'David',
-      lastName: 'Lee',
+      firstName: 'Youssef',
+      lastName: 'Moussaoui',
       email: 'billing@medicore.com',
       password: await hash('billing123', 12),
       role: 'billing',
@@ -116,7 +108,6 @@ async function seedUsers() {
   console.log('\n📧 Login Credentials:');
   console.log('  Admin:        admin@medicore.com / admin123');
   console.log('  Doctor:       doctor@medicore.com / doctor123');
-  console.log('  Doctor 2:     doctor2@medicore.com / doctor123');
   console.log('  Nurse:        nurse@medicore.com / nurse123');
   console.log('  Lab Tech:     lab@medicore.com / lab123');
   console.log('  Pharmacist:   pharmacist@medicore.com / pharma123');
@@ -227,7 +218,6 @@ async function seedDashboard() {
   // Get user IDs
   const admin = await User.findOne({ email: 'admin@medicore.com' });
   const doctor = await User.findOne({ email: 'doctor@medicore.com' });
-  const doctor2 = await User.findOne({ email: 'doctor2@medicore.com' });
 
   if (!admin || !doctor) {
     console.error('❌ Users not found. Run seed users first!');
@@ -239,61 +229,61 @@ async function seedDashboard() {
 
   // Create patients
   const patients = await Patient.insertMany([
-    { patientId: 'P-2026-0001', firstName: 'John', lastName: 'Doe', dateOfBirth: new Date('1978-05-15'), gender: 'male', phone: '+1-555-0101', email: 'john.doe@email.com', category: 'outpatient', createdBy: admin._id },
-    { patientId: 'P-2026-0002', firstName: 'Jane', lastName: 'Smith', dateOfBirth: new Date('1992-08-22'), gender: 'female', phone: '+1-555-0102', email: 'jane.smith@email.com', category: 'emergency', createdBy: admin._id },
-    { patientId: 'P-2026-0003', firstName: 'Robert', lastName: 'Brown', dateOfBirth: new Date('2016-03-10'), gender: 'male', phone: '+1-555-0103', category: 'outpatient', createdBy: admin._id },
-    { patientId: 'P-2026-0004', firstName: 'Maria', lastName: 'Garcia', dateOfBirth: new Date('1959-11-30'), gender: 'female', phone: '+1-555-0104', category: 'hospitalized', createdBy: admin._id },
-    { patientId: 'P-2026-0005', firstName: 'James', lastName: 'Wilson', dateOfBirth: new Date('1985-07-18'), gender: 'male', phone: '+1-555-0105', category: 'outpatient', createdBy: admin._id },
-    { patientId: 'P-2026-0006', firstName: 'Patricia', lastName: 'Martinez', dateOfBirth: new Date('1970-02-25'), gender: 'female', phone: '+1-555-0106', category: 'external', createdBy: admin._id },
-    { patientId: 'P-2026-0007', firstName: 'Michael', lastName: 'Anderson', dateOfBirth: new Date('1995-12-05'), gender: 'male', phone: '+1-555-0107', category: 'outpatient', createdBy: admin._id },
-    { patientId: 'P-2026-0008', firstName: 'Linda', lastName: 'Taylor', dateOfBirth: new Date('1988-09-14'), gender: 'female', phone: '+1-555-0108', category: 'hospitalized', createdBy: admin._id },
+    { patientId: 'P-2026-0001', firstName: 'Fatima', lastName: 'Alaoui', dateOfBirth: new Date('1981-03-15'), gender: 'female', phone: '+212600000001', category: 'outpatient', createdBy: admin._id },
+    { patientId: 'P-2026-0002', firstName: 'Youssef', lastName: 'Benali', dateOfBirth: new Date('1994-07-22'), gender: 'male', phone: '+212600000002', category: 'emergency', createdBy: admin._id },
+    { patientId: 'P-2026-0003', firstName: 'Nadia', lastName: 'Moussaoui', dateOfBirth: new Date('1998-11-05'), gender: 'female', phone: '+212600000003', category: 'outpatient', createdBy: admin._id },
+    { patientId: 'P-2026-0004', firstName: 'Hamid', lastName: 'Tazi', dateOfBirth: new Date('1959-01-10'), gender: 'male', phone: '+212600000004', category: 'hospitalized', createdBy: admin._id },
+    { patientId: 'P-2026-0005', firstName: 'Sara', lastName: 'Kadiri', dateOfBirth: new Date('2007-06-28'), gender: 'female', phone: '+212600000005', category: 'outpatient', createdBy: admin._id },
+    { patientId: 'P-2026-0006', firstName: 'Omar', lastName: 'Chraibi', dateOfBirth: new Date('1975-09-03'), gender: 'male', phone: '+212600000006', category: 'external', createdBy: admin._id },
+    { patientId: 'P-2026-0007', firstName: 'Laila', lastName: 'Sebti', dateOfBirth: new Date('1988-12-17'), gender: 'female', phone: '+212600000007', category: 'outpatient', createdBy: admin._id },
+    { patientId: 'P-2026-0008', firstName: 'Karim', lastName: 'Berrada', dateOfBirth: new Date('1990-04-20'), gender: 'male', phone: '+212600000008', category: 'hospitalized', createdBy: admin._id },
   ]);
   console.log(`  ✓ Created ${patients.length} patients`);
 
   // Create appointments
   const appts = await Appointment.insertMany([
-    { patient: patients[0]._id, doctor: doctor._id, department: 'Cardiology', dateTime: new Date(today.getTime() + 9 * 3600000), duration: 30, reason: 'Follow-up consultation', status: 'in-progress', createdBy: admin._id },
-    { patient: patients[1]._id, doctor: doctor._id, department: 'Emergency', dateTime: new Date(today.getTime() + 9 * 3600000 + 30 * 60000), duration: 45, reason: 'Acute chest pain', status: 'in-progress', createdBy: admin._id },
-    { patient: patients[2]._id, doctor: doctor2?._id || doctor._id, department: 'Pediatrics', dateTime: new Date(today.getTime() + 10 * 3600000), duration: 20, reason: 'Vaccination', status: 'confirmed', createdBy: admin._id },
-    { patient: patients[3]._id, doctor: doctor._id, department: 'Neurology', dateTime: new Date(today.getTime() + 10 * 3600000 + 30 * 60000), duration: 30, reason: 'Chronic headache', status: 'confirmed', createdBy: admin._id },
-    { patient: patients[4]._id, doctor: doctor._id, department: 'General Medicine', dateTime: new Date(today.getTime() + 11 * 3600000), duration: 30, reason: 'Annual check-up', status: 'completed', createdBy: admin._id },
-    { patient: patients[5]._id, doctor: doctor._id, department: 'Ophthalmology', dateTime: new Date(today.getTime() + 14 * 3600000), duration: 30, reason: 'Vision test', status: 'scheduled', createdBy: admin._id },
-    { patient: patients[6]._id, doctor: doctor._id, department: 'Dermatology', dateTime: new Date(today.getTime() + 15 * 3600000), duration: 30, reason: 'Skin examination', status: 'confirmed', createdBy: admin._id },
-    { patient: patients[7]._id, doctor: doctor._id, department: 'Surgery', dateTime: new Date(today.getTime() + 16 * 3600000), duration: 60, reason: 'Pre-operative assessment', status: 'in-preparation', createdBy: admin._id },
+    { patient: patients[0]._id, doctor: doctor._id, department: 'Cardiology', dateTime: new Date(today.getTime() + 9 * 3600000 + 15 * 60000), duration: 30, reason: 'Follow-up', status: 'in-progress', createdBy: admin._id },
+    { patient: patients[1]._id, doctor: doctor._id, department: 'Emergency', dateTime: new Date(today.getTime() + 9 * 3600000 + 40 * 60000), duration: 45, reason: 'Acute pain', status: 'in-progress', createdBy: admin._id },
+    { patient: patients[2]._id, doctor: doctor._id, department: 'Gynecology', dateTime: new Date(today.getTime() + 10 * 3600000), duration: 30, reason: 'Check-up', status: 'confirmed', createdBy: admin._id },
+    { patient: patients[3]._id, doctor: doctor._id, department: 'Neurology', dateTime: new Date(today.getTime() + 10 * 3600000 + 30 * 60000), duration: 30, reason: 'Headache', status: 'confirmed', createdBy: admin._id },
+    { patient: patients[4]._id, doctor: doctor._id, department: 'Pediatrics', dateTime: new Date(today.getTime() + 11 * 3600000), duration: 20, reason: 'Vaccination', status: 'completed', createdBy: admin._id },
+    { patient: patients[5]._id, doctor: doctor._id, department: 'Ophthalmology', dateTime: new Date(today.getTime() + 11 * 3600000 + 30 * 60000), duration: 30, reason: 'Eye exam', status: 'scheduled', createdBy: admin._id },
+    { patient: patients[6]._id, doctor: doctor._id, department: 'Dermatology', dateTime: new Date(today.getTime() + 14 * 3600000), duration: 30, reason: 'Skin rash', status: 'confirmed', createdBy: admin._id },
+    { patient: patients[7]._id, doctor: doctor._id, department: 'Surgery', dateTime: new Date(today.getTime() + 15 * 3600000 + 30 * 60000), duration: 60, reason: 'Pre-op', status: 'in-preparation', createdBy: admin._id },
   ]);
   console.log(`  ✓ Created ${appts.length} appointments`);
 
   // Create alerts
   await Alert.insertMany([
-    { type: 'error', title: 'Critical Stock Alert', message: 'Amoxicillin 500mg stock critically low (14 units remaining)', module: 'pharmacy' },
-    { type: 'warning', title: 'Pending Lab Results', message: '3 lab results pending validation for over 2 hours', module: 'lab' },
-    { type: 'info', title: 'System Update Available', message: 'Version 3.2.1 is ready for installation', module: 'system' },
+    { type: 'error', title: 'Critical stock — Amoxicillin 500mg', message: 'Remaining quantity: 14 units. Resupply required.', module: 'pharmacy' },
+    { type: 'warning', title: '3 LIS results not transmitted', message: 'Analyses pending for > 2h. Check the laboratory module.', module: 'lab' },
+    { type: 'info', title: 'System update available', message: 'Version 3.2.1 ready. Automatic sync enabled.', module: 'system' },
   ]);
   console.log('  ✓ Created 3 system alerts');
 
   // Create activity logs
   await ActivityLog.insertMany([
-    { action: 'Blood test analysis', module: 'lab', details: 'validated', user: doctor._id, color: 'var(--green)', createdAt: new Date(Date.now() - 5 * 60000) },
-    { action: 'Medical record #2847', module: 'record', details: 'updated', user: doctor._id, color: 'var(--accent)', createdAt: new Date(Date.now() - 10 * 60000) },
-    { action: 'Pharmacy stock alert', module: 'pharmacy', details: 'Paracetamol below threshold', user: admin._id, color: 'var(--amber)', createdAt: new Date(Date.now() - 15 * 60000) },
-    { action: 'Cardiac echo imaging', module: 'imaging', details: 'archived', user: doctor._id, color: 'var(--purple)', createdAt: new Date(Date.now() - 20 * 60000) },
-    { action: 'Emergency admission', module: 'patient', details: 'Jane Smith registered', user: admin._id, color: 'var(--red)', createdAt: new Date(Date.now() - 25 * 60000) },
-    { action: 'Invoice #F-2026-0412', module: 'billing', details: 'paid - $850', user: admin._id, color: 'var(--green)', createdAt: new Date(Date.now() - 30 * 60000) },
-    { action: 'New patient registered', module: 'patient', details: 'Robert Brown admitted', user: admin._id, color: 'var(--accent)', createdAt: new Date(Date.now() - 40 * 60000) },
-    { action: 'System backup', module: 'system', details: 'completed successfully', user: admin._id, color: 'var(--muted)', createdAt: new Date(Date.now() - 50 * 60000) },
+    { action: 'NFS analysis', module: 'lab', details: 'validated', user: doctor._id, color: 'var(--green)', createdAt: new Date(Date.now() - 3 * 60000) },
+    { action: 'Record #2847', module: 'record', details: 'updated', user: doctor._id, color: 'var(--accent)', createdAt: new Date(Date.now() - 8 * 60000) },
+    { action: 'Paracetamol 1g stock', module: 'pharmacy', details: 'below threshold', user: admin._id, color: 'var(--amber)', createdAt: new Date(Date.now() - 12 * 60000) },
+    { action: 'Cardiac echo PACS', module: 'imaging', details: 'archived', user: doctor._id, color: 'var(--purple)', createdAt: new Date(Date.now() - 15 * 60000) },
+    { action: 'Emergency admission — Youssef Benali', module: 'patient', details: 'registered', user: admin._id, color: 'var(--red)', createdAt: new Date(Date.now() - 20 * 60000) },
+    { action: 'Invoice #F-2026-0412', module: 'billing', details: 'paid — 850 MAD', user: admin._id, color: 'var(--green)', createdAt: new Date(Date.now() - 25 * 60000) },
+    { action: 'New patient', module: 'patient', details: 'admitted — Nadia Moussaoui', user: admin._id, color: 'var(--accent)', createdAt: new Date(Date.now() - 38 * 60000) },
+    { action: 'Cloud backup AWS', module: 'patient', details: 'complete — 100% success', user: admin._id, color: 'var(--muted)', createdAt: new Date(Date.now() - 45 * 60000) },
+    { action: 'Lab request #L-2026-0034', module: 'lab', details: 'created', user: doctor._id, color: 'var(--accent2)', createdAt: new Date(Date.now() - 52 * 60000) },
   ]);
   console.log('  ✓ Created 8 activity logs');
 
   // Create lab requests
   await LabRequest.insertMany([
-    { requestId: 'L-2026-0001', patient: patients[0]._id, doctor: doctor._id, tests: [{ name: 'Complete Blood Count', category: 'Hematology' }], status: 'validated', results: [{ testName: 'WBC', value: '7.2', unit: '10^9/L', referenceRange: '4.5-11', flag: 'normal' }] },
-    { requestId: 'L-2026-0002', patient: patients[1]._id, doctor: doctor._id, tests: [{ name: 'Cardiac Enzymes', category: 'Cardiology' }], status: 'in-progress' },
-    { requestId: 'L-2026-0003', patient: patients[4]._id, doctor: doctor._id, tests: [{ name: 'Lipid Panel', category: 'Biochemistry' }], status: 'completed' },
-    ...Array.from({ length: 20 }, (_, i) => ({
+    { requestId: 'L-2026-0001', patient: patients[0]._id, doctor: doctor._id, tests: [{ name: 'NFS', category: 'Hematology' }], status: 'validated', results: [{ testName: 'NFS', value: '5.2', unit: '10^9/L', referenceRange: '4.5-11', flag: 'normal' }] },
+    { requestId: 'L-2026-0002', patient: patients[1]._id, doctor: doctor._id, tests: [{ name: 'CRP', category: 'Biochemistry' }], status: 'in-progress' },
+    { requestId: 'L-2026-0003', patient: patients[2]._id, doctor: doctor._id, tests: [{ name: 'TSH', category: 'Endocrinology' }], status: 'requested' },
+    ...Array.from({ length: 31 }, (_, i) => ({
       requestId: `L-2026-${String(i + 4).padStart(4, '0')}`,
-      patient: patients[i % patients.length]._id,
-      doctor: doctor._id,
-      tests: [{ name: ['CBC', 'Urinalysis', 'Glucose', 'HbA1c', 'Thyroid Panel'][i % 5], category: 'General' }],
+      patient: patients[i % patients.length]._id, doctor: doctor._id,
+      tests: [{ name: ['NFS', 'CRP', 'TSH', 'HbA1c', 'Lipid Panel'][i % 5], category: 'General' }],
       status: 'completed',
     })),
   ]);
@@ -301,16 +291,14 @@ async function seedDashboard() {
 
   // Create invoices
   await Invoice.insertMany([
-    { invoiceId: 'F-2026-0001', patient: patients[0]._id, items: [{ description: 'Cardiology Consultation', category: 'consultation', amount: 150 }], totalAmount: 150, paidAmount: 150, status: 'paid', payments: [{ amount: 150, method: 'card', paidAt: new Date() }], createdBy: admin._id },
-    { invoiceId: 'F-2026-0002', patient: patients[1]._id, items: [{ description: 'Emergency Care', category: 'emergency', amount: 500 }], totalAmount: 500, paidAmount: 250, status: 'partially-paid', payments: [{ amount: 250, method: 'cash', paidAt: new Date() }], createdBy: admin._id },
-    ...Array.from({ length: 15 }, (_, i) => ({
-      invoiceId: `F-2026-${String(i + 3).padStart(4, '0')}`,
+    { invoiceId: 'F-2026-0001', patient: patients[0]._id, items: [{ description: 'Consultation', category: 'consultation', amount: 300 }], totalAmount: 300, paidAmount: 300, status: 'paid', payments: [{ amount: 300, method: 'cash', paidAt: new Date() }], createdBy: admin._id },
+    ...Array.from({ length: 17 }, (_, i) => ({
+      invoiceId: `F-2026-${String(i + 2).padStart(4, '0')}`,
       patient: patients[i % patients.length]._id,
-      items: [{ description: 'Medical Consultation', category: 'consultation', amount: 100 + (i * 25) }],
-      totalAmount: 100 + (i * 25),
-      paidAmount: i % 3 === 0 ? 100 + (i * 25) : i % 3 === 1 ? 50 : 0,
+      items: [{ description: 'Consultation', category: 'consultation', amount: 200 + (i * 50) }],
+      totalAmount: 200 + (i * 50), paidAmount: i % 3 === 0 ? 200 + (i * 50) : i % 3 === 1 ? 100 : 0,
       status: i % 3 === 0 ? 'paid' : i % 3 === 1 ? 'partially-paid' : 'unpaid',
-      payments: i % 3 !== 2 ? [{ amount: i % 3 === 0 ? 100 + (i * 25) : 50, method: 'cash', paidAt: new Date() }] : [],
+      payments: i % 3 !== 2 ? [{ amount: i % 3 === 0 ? 200 + (i * 50) : 100, method: 'cash', paidAt: new Date() }] : [],
       createdBy: admin._id,
     })),
   ]);
@@ -323,36 +311,29 @@ async function seedDashboard() {
       patient: p._id,
       doctor: doctor._id,
       type: 'consultation',
-      content: {
-        chiefComplaint: 'Routine examination',
-        examination: 'Physical examination completed',
-        diagnosis: 'Patient in good health',
-        treatmentPlan: 'Continue regular check-ups',
-        notes: 'No immediate concerns',
-      },
+      content: { chiefComplaint: 'Routine check', diagnosis: 'Normal', notes: 'No issues' },
     }))
   );
   console.log('  ✓ Created 5 medical records');
 
   // Create imaging studies
   await ImagingStudy.insertMany([
-    { studyId: 'IMG-2026-0001', patient: patients[0]._id, doctor: doctor._id, type: 'echocardiography', bodyPart: 'Heart', status: 'completed', report: 'Normal cardiac function' },
-    { studyId: 'IMG-2026-0002', patient: patients[3]._id, doctor: doctor._id, type: 'mri', bodyPart: 'Brain', status: 'completed', report: 'No abnormalities detected' },
+    { studyId: 'IMG-2026-0001', patient: patients[0]._id, doctor: doctor._id, type: 'echocardiography', bodyPart: 'Heart', status: 'archived' },
+    { studyId: 'IMG-2026-0002', patient: patients[3]._id, doctor: doctor._id, type: 'mri', bodyPart: 'Brain', status: 'completed' },
     { studyId: 'IMG-2026-0003', patient: patients[7]._id, doctor: doctor._id, type: 'xray', bodyPart: 'Chest', status: 'requested' },
   ]);
   console.log('  ✓ Created 3 imaging studies');
 
   // Create pharmacy items
   await PharmacyItem.insertMany([
-    { name: 'Amoxicillin 500mg', category: 'Antibiotics', quantity: 14, unit: 'tablets', minThreshold: 50, supplier: 'PharmaCorp', expiryDate: new Date('2027-06-01'), unitPrice: 12, status: 'low-stock' },
-    { name: 'Paracetamol 500mg', category: 'Analgesics', quantity: 8, unit: 'tablets', minThreshold: 30, supplier: 'MedSupply Inc', expiryDate: new Date('2027-03-15'), unitPrice: 5, status: 'low-stock' },
-    { name: 'Omeprazole 20mg', category: 'Gastroenterology', quantity: 200, unit: 'capsules', minThreshold: 20, supplier: 'PharmaCorp', expiryDate: new Date('2027-12-01'), unitPrice: 15, status: 'in-stock' },
-    { name: 'Metformin 850mg', category: 'Diabetes', quantity: 150, unit: 'tablets', minThreshold: 30, supplier: 'DiabetesCare', expiryDate: new Date('2027-09-01'), unitPrice: 8, status: 'in-stock' },
-    { name: 'Atorvastatin 10mg', category: 'Cardiology', quantity: 100, unit: 'tablets', minThreshold: 20, supplier: 'CardioMed', expiryDate: new Date('2028-01-01'), unitPrice: 18, status: 'in-stock' },
-    { name: 'Ibuprofen 400mg', category: 'Analgesics', quantity: 0, unit: 'tablets', minThreshold: 40, supplier: 'MedSupply Inc', expiryDate: new Date('2027-05-01'), unitPrice: 6, status: 'out-of-stock' },
-    { name: 'Lisinopril 10mg', category: 'Cardiology', quantity: 120, unit: 'tablets', minThreshold: 25, supplier: 'CardioMed', expiryDate: new Date('2027-08-15'), unitPrice: 10, status: 'in-stock' },
+    { name: 'Amoxicillin 500mg', category: 'Antibiotics', quantity: 14, unit: 'tablets', minThreshold: 50, supplier: 'PharmaCo', expiryDate: new Date('2027-06-01'), unitPrice: 5, status: 'low-stock' },
+    { name: 'Paracetamol 1g', category: 'Analgesics', quantity: 8, unit: 'tablets', minThreshold: 30, supplier: 'MedSupply', expiryDate: new Date('2027-03-15'), unitPrice: 3, status: 'low-stock' },
+    { name: 'Omeprazole 20mg', category: 'Gastroenterology', quantity: 200, unit: 'capsules', minThreshold: 20, supplier: 'PharmaCo', expiryDate: new Date('2027-12-01'), unitPrice: 8, status: 'in-stock' },
+    { name: 'Metformin 850mg', category: 'Diabetes', quantity: 150, unit: 'tablets', minThreshold: 30, supplier: 'DiabCare', expiryDate: new Date('2027-09-01'), unitPrice: 4, status: 'in-stock' },
+    { name: 'Atorvastatin 10mg', category: 'Cardiology', quantity: 100, unit: 'tablets', minThreshold: 20, supplier: 'CardioMed', expiryDate: new Date('2028-01-01'), unitPrice: 10, status: 'in-stock' },
+    { name: 'Ibuprofen 400mg', category: 'Analgesics', quantity: 0, unit: 'tablets', minThreshold: 40, supplier: 'MedSupply', expiryDate: new Date('2027-05-01'), unitPrice: 4, status: 'out-of-stock' },
   ]);
-  console.log('  ✓ Created 7 pharmacy items');
+  console.log('  ✓ Created 6 pharmacy items');
 
   await mongoose.disconnect();
 }
