@@ -218,6 +218,13 @@ async function seedDashboard() {
     hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },
   }, { timestamps: true });
 
+  const SystemConfigSchema = new mongoose.Schema({
+    key: { type: String, required: true, unique: true },
+    label: String,
+    values: mongoose.Schema.Types.Mixed, // Support both arrays and objects
+    isActive: { type: Boolean, default: true },
+  }, { timestamps: true });
+
   // Create models
   const Hospital = mongoose.model('Hospital', HospitalSchema);
   const Patient = mongoose.model('Patient', PatientSchema);
@@ -229,6 +236,7 @@ async function seedDashboard() {
   const MedicalRecord = mongoose.model('MedicalRecord', MedicalRecordSchema);
   const ImagingStudy = mongoose.model('ImagingStudy', ImagingStudySchema);
   const PharmacyItem = mongoose.model('PharmacyItem', PharmacyItemSchema);
+  const SystemConfig = mongoose.model('SystemConfig', SystemConfigSchema);
   const User = mongoose.model('User');
 
   // Get user IDs
@@ -367,6 +375,45 @@ async function seedDashboard() {
     { name: 'Ibuprofen 400mg', category: 'Analgesics', quantity: 0, unit: 'tablets', minThreshold: 40, supplier: 'MedSupply', expiryDate: new Date('2027-05-01'), unitPrice: 4, status: 'out-of-stock', hospital: null },
   ]);
   console.log('  ✓ Created 6 pharmacy items');
+
+  // Create system configurations
+  await SystemConfig.insertMany([
+    {
+      key: 'departments',
+      label: 'Appointment Departments',
+      values: ['Cardiology', 'Gynecology', 'Pediatrics', 'Neurology', 'Surgery', 'Ophthalmology', 'Dermatology', 'Emergency', 'General Medicine', 'Orthopedics'],
+      isActive: true,
+    },
+    {
+      key: 'labCategories',
+      label: 'Laboratory Test Categories',
+      values: ['Hematology', 'Biochemistry', 'Endocrinology', 'Microbiology', 'Immunology', 'Serology', 'Toxicology', 'Genetics'],
+      isActive: true,
+    },
+    {
+      key: 'imagingTypes',
+      label: 'Imaging Study Types',
+      values: ['X-Ray', 'Ultrasound', 'CT Scan', 'MRI', 'Echocardiography', 'Mammography', 'PET Scan', 'Other'],
+      isActive: true,
+    },
+    {
+      key: 'labTests',
+      label: 'Laboratory Tests by Category',
+      values: {
+        Hematology: ['NFS (CBC)', 'ESR', 'Blood Group', 'Coagulation'],
+        Biochemistry: ['CRP', 'Glucose', 'Creatinine', 'Urea', 'Lipid Panel', 'Liver Panel'],
+        Endocrinology: ['TSH', 'T3', 'T4', 'HbA1c', 'Cortisol'],
+        Microbiology: ['Blood Culture', 'Urine Culture', 'Stool Culture'],
+        Immunology: ['HIV', 'Hepatitis B', 'Hepatitis C', 'ANA'],
+        Urinalysis: ['Urinalysis', 'Urine Protein'],
+        Serology: ['RPR', 'VDRL', 'Widal Test'],
+        Toxicology: ['Drug Screen', 'Alcohol Level'],
+        Genetics: ['Karyotype', 'DNA Test'],
+      },
+      isActive: true,
+    },
+  ]);
+  console.log('  ✓ Created 4 system configurations');
 
   await mongoose.disconnect();
 }

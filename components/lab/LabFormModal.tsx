@@ -14,16 +14,6 @@ interface LabFormData {
 
 const emptyForm: LabFormData = { patient: '', hospital: '', tests: [{ name: '', category: '' }], notes: '' };
 
-const testCategories = ['Hematology', 'Biochemistry', 'Endocrinology', 'Microbiology', 'Immunology', 'Urinalysis'];
-const commonTests: Record<string, string[]> = {
-  Hematology: ['NFS (CBC)', 'ESR', 'Blood Group', 'Coagulation'],
-  Biochemistry: ['CRP', 'Glucose', 'Creatinine', 'Urea', 'Lipid Panel', 'Liver Panel'],
-  Endocrinology: ['TSH', 'T3', 'T4', 'HbA1c', 'Cortisol'],
-  Microbiology: ['Blood Culture', 'Urine Culture', 'Stool Culture'],
-  Immunology: ['HIV', 'Hepatitis B', 'Hepatitis C', 'ANA'],
-  Urinalysis: ['Urinalysis', 'Urine Protein'],
-};
-
 interface PatientOption { _id: string; firstName: string; lastName: string; patientId: string; }
 interface HospitalOption { _id: string; name: string; }
 
@@ -37,6 +27,8 @@ export default function LabFormModal({ open, onClose, onSaved }: Props) {
   const [form, setForm] = useState<LabFormData>(emptyForm);
   const [patients, setPatients] = useState<PatientOption[]>([]);
   const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
+  const [testCategories, setTestCategories] = useState<string[]>([]);
+  const [labTests, setLabTests] = useState<Record<string, string[]>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -47,6 +39,30 @@ export default function LabFormModal({ open, onClose, onSaved }: Props) {
     });
     fetch('/api/settings/hospitals').then(r => r.json()).then(j => {
       if (j.success) setHospitals(j.data.filter((h: HospitalOption & { isActive: boolean }) => h.isActive));
+    });
+    // Fetch lab categories from system config
+    fetch('/api/settings/config?key=labCategories').then(r => r.json()).then(j => {
+      if (j.success && j.data) setTestCategories(j.data.values || []);
+    }).catch(() => {
+      // Fallback to default categories if config not available
+      setTestCategories(['Hematology', 'Biochemistry', 'Endocrinology', 'Microbiology', 'Immunology', 'Urinalysis', 'Serology', 'Toxicology', 'Genetics']);
+    });
+    // Fetch lab tests from system config
+    fetch('/api/settings/config?key=labTests').then(r => r.json()).then(j => {
+      if (j.success && j.data) setLabTests(j.data.values || {});
+    }).catch(() => {
+      // Fallback to default tests if config not available
+      setLabTests({
+        Hematology: ['NFS (CBC)', 'ESR', 'Blood Group', 'Coagulation'],
+        Biochemistry: ['CRP', 'Glucose', 'Creatinine', 'Urea', 'Lipid Panel', 'Liver Panel'],
+        Endocrinology: ['TSH', 'T3', 'T4', 'HbA1c', 'Cortisol'],
+        Microbiology: ['Blood Culture', 'Urine Culture', 'Stool Culture'],
+        Immunology: ['HIV', 'Hepatitis B', 'Hepatitis C', 'ANA'],
+        Urinalysis: ['Urinalysis', 'Urine Protein'],
+        Serology: ['RPR', 'VDRL', 'Widal Test'],
+        Toxicology: ['Drug Screen', 'Alcohol Level'],
+        Genetics: ['Karyotype', 'DNA Test'],
+      });
     });
     setForm(emptyForm);
     setError('');
@@ -132,12 +148,22 @@ export default function LabFormModal({ open, onClose, onSaved }: Props) {
               <option value="">Category...</option>
               {testCategories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            <select className={styles.formSelect} value={test.name} onChange={(e) => updateTest(i, 'name', e.target.value)}>
-              <option value="">Select test...</option>
-              {(test.category ? commonTests[test.category] || [] : Object.values(commonTests).flat()).map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+            {test.category && labTests[test.category] && labTests[test.category].length > 0 ? (
+              <select className={styles.formSelect} value={test.name} onChange={(e) => updateTest(i, 'name', e.target.value)}>
+                <option value="">Select test...</option>
+                {labTests[test.category].map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            ) : (
+              <input 
+                className={styles.formInput} 
+                value={test.name} 
+                onChange={(e) => updateTest(i, 'name', e.target.value)}
+                placeholder={test.category ? "Enter test name..." : "Select category first..."}
+                disabled={!test.category}
+              />
+            )}
             {form.tests.length > 1 && (
               <button type="button" onClick={() => removeTest(i)} style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer', fontSize: '14px', padding: '0 4px' }}>×</button>
             )}
