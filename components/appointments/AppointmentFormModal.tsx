@@ -35,11 +35,6 @@ const emptyForm: AppointmentFormData = {
   intake: { vitals: { weight: '', bloodPressure: '' }, questions: [...defaultQuestions] },
 };
 
-const departments = [
-  'Cardiology', 'Gynecology', 'Pediatrics', 'Neurology', 'Surgery',
-  'Ophthalmology', 'Dermatology', 'Emergency', 'General Medicine', 'Orthopedics',
-];
-
 const statuses = [
   { value: 'scheduled', label: 'Scheduled' },
   { value: 'confirmed', label: 'Confirmed' },
@@ -66,6 +61,7 @@ export default function AppointmentFormModal({ open, onClose, onSaved, editData 
   const [patients, setPatients] = useState<PatientOption[]>([]);
   const [doctors, setDoctors] = useState<DoctorOption[]>([]);
   const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
+  const [departments, setDepartments] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -122,6 +118,13 @@ export default function AppointmentFormModal({ open, onClose, onSaved, editData 
       if (j.success) setHospitals(j.data.filter((h: HospitalOption & { isActive: boolean }) => h.isActive));
     }).catch(() => {
       // Hospitals API may not exist yet, use empty
+    });
+    // Fetch departments from system config
+    fetch('/api/settings/config?key=departments').then(r => r.json()).then(j => {
+      if (j.success && j.data) setDepartments(j.data.values || []);
+    }).catch(() => {
+      // Fallback to default departments if config not available
+      setDepartments(['Cardiology', 'Gynecology', 'Pediatrics', 'Neurology', 'Surgery', 'Ophthalmology', 'Dermatology', 'Emergency', 'General Medicine', 'Orthopedics']);
     });
   }, [open]);
 

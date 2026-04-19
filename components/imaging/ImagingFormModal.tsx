@@ -5,15 +5,6 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import styles from '@/styles/ui.module.css';
 
-const imagingTypes = [
-  { value: 'xray', label: 'X-Ray' },
-  { value: 'ultrasound', label: 'Ultrasound' },
-  { value: 'ct', label: 'CT Scan' },
-  { value: 'mri', label: 'MRI' },
-  { value: 'echocardiography', label: 'Echocardiography' },
-  { value: 'other', label: 'Other' },
-];
-
 interface PatientOption { _id: string; firstName: string; lastName: string; patientId: string; }
 interface HospitalOption { _id: string; name: string; }
 
@@ -34,6 +25,7 @@ export default function ImagingFormModal({ open, onClose, onSaved, editData }: P
   const [hospital, setHospital] = useState('');
   const [patients, setPatients] = useState<PatientOption[]>([]);
   const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
+  const [imagingTypes, setImagingTypes] = useState<{ value: string; label: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,6 +34,31 @@ export default function ImagingFormModal({ open, onClose, onSaved, editData }: P
     fetch('/api/patients?limit=200').then(r => r.json()).then(j => { if (j.success) setPatients(j.data); });
     fetch('/api/settings/hospitals').then(r => r.json()).then(j => {
       if (j.success) setHospitals(j.data.filter((h: HospitalOption & { isActive: boolean }) => h.isActive));
+    });
+    // Fetch imaging types from system config
+    fetch('/api/settings/config?key=imagingTypes').then(r => r.json()).then(j => {
+      if (j.success && j.data) {
+        // Convert string array to value/label format
+        const types = (j.data.values || []).map((label: string) => ({
+          value: label.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+          label: label
+        }));
+        setImagingTypes(types);
+        // Set default type if not already set
+        if (types.length > 0 && !type) setType(types[0].value);
+      }
+    }).catch(() => {
+      // Fallback to default types if config not available
+      setImagingTypes([
+        { value: 'xray', label: 'X-Ray' },
+        { value: 'ultrasound', label: 'Ultrasound' },
+        { value: 'ct', label: 'CT Scan' },
+        { value: 'mri', label: 'MRI' },
+        { value: 'echocardiography', label: 'Echocardiography' },
+        { value: 'mammography', label: 'Mammography' },
+        { value: 'pet-scan', label: 'PET Scan' },
+        { value: 'other', label: 'Other' },
+      ]);
     });
   }, [open]);
 

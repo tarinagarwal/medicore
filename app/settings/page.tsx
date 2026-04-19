@@ -36,6 +36,14 @@ interface SupportRequest {
   updatedAt: string;
 }
 
+interface SystemConfig {
+  _id: string;
+  key: string;
+  label: string;
+  values: string[] | Record<string, string[]>;
+  isActive: boolean;
+}
+
 const roles = [
   { value: 'admin', label: 'Administrator' }, { value: 'doctor', label: 'Doctor' }, { value: 'nurse', label: 'Nurse' },
   { value: 'lab-tech', label: 'Lab Technician' }, { value: 'pharmacist', label: 'Pharmacist' },
@@ -50,14 +58,18 @@ export default function SettingsPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [hospitals, setHospitals] = useState<HospitalRow[]>([]);
   const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
+  const [configs, setConfigs] = useState<SystemConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [hospitalModalOpen, setHospitalModalOpen] = useState(false);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
+  const [selectedConfig, setSelectedConfig] = useState<SystemConfig | null>(null);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', role: 'doctor', department: '', hospital: '' });
   const [hospitalForm, setHospitalForm] = useState({ name: '', address: '', phone: '', email: '' });
   const [supportForm, setSupportForm] = useState({ status: '', adminNotes: '' });
+  const [configForm, setConfigForm] = useState({ values: [] as string[], newValue: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -76,7 +88,12 @@ export default function SettingsPage() {
     catch (err) { console.error(err); }
   };
 
-  useEffect(() => { fetchUsers(); fetchHospitals(); fetchSupportRequests(); }, []);
+  const fetchConfigs = async () => {
+    try { const res = await fetch('/api/settings/config'); const json = await res.json(); if (json.success) setConfigs(json.data); }
+    catch (err) { console.error(err); }
+  };
+
+  useEffect(() => { fetchUsers(); fetchHospitals(); fetchSupportRequests(); fetchConfigs(); }, []);
 
   const isAdmin = session?.user?.role === 'admin';
 
@@ -146,6 +163,39 @@ export default function SettingsPage() {
     if (!confirm('Delete this support request?')) return;
     await fetch(`/api/support/${id}`, { method: 'DELETE' });
     fetchSupportRequests();
+  };
+
+  // ── Config CRUD ──
+  const handleUpdateConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedConfig) return;
+    setSaving(true); setError('');
+    try {
+      const res = await fetch('/api/settings/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: selectedConfig.key,
+          label: selectedConfig.label,
+          values: configForm.values,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      setConfigModalOpen(false); fetchConfigs();
+      setConfigForm({ values: [], newValue: '' });
+      setSelectedConfig(null);
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); }
+    finally { setSaving(false); }
+  };
+
+  const addConfigValue = () => {
+    if (!configForm.newValue.trim()) return;
+    setConfigForm(p => ({ ...p, values: [...p.values, configForm.newValue.trim()], newValue: '' }));
+  };
+
+  const removeConfigValue = (index: number) => {
+    setConfigForm(p => ({ ...p, values: p.values.filter((_, i) => i !== index) }));
   };
 
   // ── User columns ──
@@ -326,7 +376,7 @@ export default function SettingsPage() {
         )}
       </div>
 
-      <Tabs tabs={[{ label: 'Users', value: 'users' }, { label: 'Hospitals', value: 'hospitals' }, { label: 'Support', value: 'support' }]} active={tab} onChange={setTab} />
+      <Tabs tabs={[{ label: 'Users', value: 'users' }, { label: 'Hospitals', value: 'hospitals' }, { label: 'Support', value: 'support' }, { label: 'System Config', value: 'config' }]} active={tab} onChange={setTab} />
 
       {tab === 'users' && (
         <Card style={{ marginTop: '16px' }}>
@@ -353,6 +403,49 @@ export default function SettingsPage() {
             <DataTable columns={supportColumns} data={supportRequests as unknown as Record<string, unknown>[]} />
           )}
         </Card>
+      )}
+
+      {tab === 'config' && (
+        <div style={{ marginTop: '16px', display: 'grid', gap: '16px' }}>
+          {configs.filter(c => c.key !== 'labTests').map(config => (
+            <Card key={config._id}>
+              <CardHeader 
+                title={config.label} 
+                right={
+                  isAdmin && (
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => {
+                        setSelectedConfig(config);
+                        setConfigForm({ values: Array.isArray(config.values) ? [...config.values] : [], newValue: '' });
+                        setConfigModalOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  )
+                } 
+              />
+              <div style={{ padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {Array.isArray(config.values) && config.values.map((value, idx) => (
+                  <div 
+                    key={idx} 
+                    style={{ 
+                      padding: '6px 12px', 
+                      background: 'var(--bg)', 
+                      border: '1px solid var(--border)', 
+                      borderRadius: 'var(--radius-sm)', 
+                      fontSize: '12.5px',
+                      fontWeight: 500
+                    }}
+                  >
+                    {value}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
 
       {/* ── Add User Modal ── */}
@@ -454,6 +547,54 @@ export default function SettingsPage() {
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
               <Button variant="secondary" type="button" onClick={() => { setSupportModalOpen(false); setSelectedRequest(null); }}>Cancel</Button>
               <Button type="submit" disabled={saving}>{saving ? 'Updating...' : 'Update Request'}</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* ── Edit System Config Modal ── */}
+      {configModalOpen && selectedConfig && (
+        <Modal title={`Edit ${selectedConfig.label}`} onClose={() => { setConfigModalOpen(false); setSelectedConfig(null); }}>
+          {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: 'var(--red)', padding: '10px 14px', borderRadius: 'var(--radius-sm)', fontSize: '12.5px', marginBottom: '16px' }}>{error}</div>}
+          
+          <form onSubmit={handleUpdateConfig}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Current Values</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                {configForm.values.map((value, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
+                    <span style={{ flex: 1, fontSize: '13px' }}>{value}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeConfigValue(idx)}
+                      style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer', padding: '4px' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Add New Value</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  className={styles.formInput}
+                  value={configForm.newValue}
+                  onChange={(e) => setConfigForm(p => ({ ...p, newValue: e.target.value }))}
+                  placeholder="Enter new value..."
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addConfigValue(); } }}
+                />
+                <Button type="button" onClick={addConfigValue}>
+                  <Plus size={16} /> Add
+                </Button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <Button variant="secondary" type="button" onClick={() => { setConfigModalOpen(false); setSelectedConfig(null); }}>Cancel</Button>
+              <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
             </div>
           </form>
         </Modal>

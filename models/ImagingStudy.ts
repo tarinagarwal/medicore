@@ -10,7 +10,6 @@ const ImagingStudySchema = new Schema<ImagingStudyDocument>(
     doctor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     type: {
       type: String,
-      enum: ['xray', 'ultrasound', 'ct', 'mri', 'echocardiography', 'other'],
       required: true,
     },
     bodyPart: { type: String, default: '' },
